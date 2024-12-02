@@ -1,0 +1,6 @@
+<RCC>
+  <qresource prefix="/qt/qml/FileTransport/">
+    <file alias="resource.qrc">C:/Users/ngovi/OneDrive/Documents/FileTransport/resource.qrc</file>
+  </qresource>
+</RCC>
+

@@ -1,0 +1,4 @@
+module FileTransport
+typeinfo appFileTransport.qmltypes
+prefer :/qt/qml/FileTransport/
+

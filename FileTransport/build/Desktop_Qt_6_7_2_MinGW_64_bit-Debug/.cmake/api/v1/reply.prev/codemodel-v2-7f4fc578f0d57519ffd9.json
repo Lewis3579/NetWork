@@ -1,0 +1,115 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"hasInstallRule" : true,
+					"jsonFile" : "directory-.-Debug-cb176a901eb844e05af1.json",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					]
+				}
+			],
+			"name" : "Debug",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0
+					],
+					"name" : "FileTransport",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "all_qmltyperegistrations::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-all_qmltyperegistrations-Debug-c85160e0e21eb1327238.json",
+					"name" : "all_qmltyperegistrations",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appFileTransport::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appFileTransport-Debug-5b7c3169b36025c28139.json",
+					"name" : "appFileTransport",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appFileTransport_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appFileTransport_autogen-Debug-1471dceedd997b65cf9d.json",
+					"name" : "appFileTransport_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appFileTransport_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appFileTransport_autogen_timestamp_deps-Debug-94e5c074b194ea22e8f8.json",
+					"name" : "appFileTransport_autogen_timestamp_deps",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appFileTransport_qmlimportscan::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appFileTransport_qmlimportscan-Debug-8d2a3e1bddedc42743eb.json",
+					"name" : "appFileTransport_qmlimportscan",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appFileTransport_qmltyperegistration::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appFileTransport_qmltyperegistration-Debug-82a7ada2fbf5ce9abbd3.json",
+					"name" : "appFileTransport_qmltyperegistration",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "appFileTransport_tooling::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-appFileTransport_tooling-Debug-810af812d4e8cf39bb1f.json",
+					"name" : "appFileTransport_tooling",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "C:/Users/ngovi/OneDrive/Documents/FileTransport/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug",
+		"source" : "C:/Users/ngovi/OneDrive/Documents/FileTransport"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 7
+	}
+}

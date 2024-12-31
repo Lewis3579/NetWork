@@ -6,15 +6,31 @@ MainWindow::MainWindow(QWidget *parent)
     , ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
+
+    qDebug() << QSqlDatabase::drivers();
+    db = QSqlDatabase::addDatabase("QPSQL");
+    db.setHostName("localhost");
+    db.setDatabaseName("FileTransfer");
+    db.setUserName("postgres");
+    db.setPassword("Khanh2003.");
+    bool ok = db.open();
+    if (ok){
+        qDebug() << "Open database successfully";
+    }
+    else{
+        qDebug() << "Fail to open database";
+    }
+
     server = new QTcpServer();
 
-    if(server->listen(QHostAddress::Any, 8080)){
+    if(server->listen(QHostAddress::AnyIPv4, 1234)){
         connect(server,SIGNAL(newConnection()), this, SLOT(newConnection()));
         QMessageBox::information(this, "Status", "Server started.");
     }
     else{
         QMessageBox::information(this, "Status", "Unable to start server.");
     }
+
 
 
 }
@@ -36,9 +52,36 @@ void MainWindow::readDataFromSocket()
     QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
 
     QByteArray messageFromServer = socket->readAll();
-    QString message = "Client " + QString::number(socket->socketDescriptor()) + ": " + QString::fromStdString(messageFromServer.toStdString());
+    QString messagePostProcessing = QString::fromStdString(messageFromServer.toStdString());
+    QString message = "Client " + QString::number(socket->socketDescriptor()) + ": " + messagePostProcessing;
 
     ui->textEdit->append(message);
+
+    if(QString::compare(messagePostProcessing,"1000")==0){
+        ui->textEdit->append("command");
+        disconnect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
+        connect(socket, SIGNAL(readyRead()), this, SLOT(readSpecialFromSocket()));
+    }
+}
+
+void MainWindow::readSpecialFromSocket()
+{
+    QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
+
+    QByteArray messageFromServer = socket->readAll();
+    QString messagePostProcessing = QString::fromStdString(messageFromServer.toStdString());
+    QString message = "Client " + QString::number(socket->socketDescriptor()) + " special: " + messagePostProcessing;
+    ui->textEdit->append(message);
+
+    QFile file("D:\\dataRoot\\dataContainer.txt");
+    if(!file.open(QIODevice::WriteOnly|QIODevice::Text)){
+        qDebug() << "Cant open selected file.";
+    }
+    QTextStream out(&file);
+    out << messagePostProcessing;
+
+    disconnect(socket, SIGNAL(readyRead()), this, SLOT(readSpecialFromSocket()));
+    connect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
 }
 
 void MainWindow::addNewClient(QTcpSocket* socket)

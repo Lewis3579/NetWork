@@ -11,6 +11,10 @@
 #include <QString>
 #include <QByteArray>
 #include <QDataStream>
+#include <QFile>
+#include <QSqlQuery>
+#include <QSqlRecord>
+#include <QSqlError>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -29,6 +33,7 @@ public:
 private slots:
     void newConnection();
     void readDataFromSocket();
+    void readSpecialFromSocket();
 
     void on_pushButton_2_clicked();
 
@@ -38,5 +43,6 @@ private:
     QList<QTcpSocket*> clientList;
 
     void addNewClient(QTcpSocket* socket);
+    QSqlDatabase db;
 };
 #endif // MAINWINDOW_H

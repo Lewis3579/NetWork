@@ -34,6 +34,7 @@ private slots:
     void newConnection();
     void readDataFromSocket();
     void readSpecialFromSocket();
+    void readSpecialLargeFromSocket();
 
     void on_pushButton_2_clicked();
 
@@ -44,5 +45,9 @@ private:
 
     void addNewClient(QTcpSocket* socket);
     QSqlDatabase db;
+
+    QString response;
+    QString fileName;
+    int fileSize;
 };
 #endif // MAINWINDOW_H

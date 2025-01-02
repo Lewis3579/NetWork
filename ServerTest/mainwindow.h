@@ -54,12 +54,18 @@ private:
     int fileSize;
     QDir rootDir;
     int userID;
-    int folderID;
+    int folderCurrentID;
     QDir tempDir;
     QString fileState;
 
     int fileDownloadID;
+    int fileDownloadFolder;
     QString fileDownloadPath;
     QString fileDownloadName;
+
+    int folderDownloadID;
+    int folderDownloadParent;
+    QString folderDownloadPath;
+    QString folderDownloadName;
 };
 #endif // MAINWINDOW_H

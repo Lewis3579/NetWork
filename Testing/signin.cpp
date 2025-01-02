@@ -16,6 +16,7 @@ SignIn::SignIn(QWidget *parent, QTcpSocket* socket)    : QDialog(parent)
     socketLogin = socket;
 
     connect(ui->pushButton,SIGNAL(clicked()),parent,SLOT(transitionToSignUp()));
+    ui->lineEdit_2->setEchoMode(QLineEdit::Password);
 }
 SignIn::~SignIn()
 {

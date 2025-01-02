@@ -23,9 +23,11 @@ public:
     void setFileSIze(int fileSize);
     QPushButton* getFileButton();
     QString getFileName();
+    int getFileID();
+    int getFolderID();
 
 public slots:
-    void downloadFromServer();
+    void downloadFileFromServer();
 
 private:
     QPushButton* button;

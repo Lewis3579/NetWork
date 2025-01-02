@@ -17,6 +17,16 @@ QString FileToDownload::getFileName()
     return this->button->text();
 }
 
+int FileToDownload::getFileID()
+{
+    return this->fileID;
+}
+
+int FileToDownload::getFolderID()
+{
+    return this->folderID;
+}
+
 void FileToDownload::setFilePath(QString filePath){
     this->filePath = filePath;
 }
@@ -40,7 +50,7 @@ void FileToDownload::setFileSIze(int fileSize)
 {
     this->fileSize = fileSize;
 }
-void FileToDownload::downloadFromServer()
+void FileToDownload::downloadFileFromServer()
 {
 
     QFile file("D:\\fileINFO.txt");

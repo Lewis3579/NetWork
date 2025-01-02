@@ -23,7 +23,11 @@ public:
     void setParentID(int parentID);
     QPushButton* getFolderButton();
     QString getFolderName();
+    int getFolderID();
+    int getParentID();
 
+public slots:
+    void downloadFolderFromServer();
 
 private:
     QPushButton* button;

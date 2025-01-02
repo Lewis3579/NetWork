@@ -53,6 +53,10 @@ private slots:
 
     void on_pushButton_9_clicked();
 
+    void on_pushButton_10_clicked();
+
+    void on_pushButton_11_clicked();
+
 private:
     Ui::MainWindow *ui;
     void sendData(QString bufferString);
@@ -81,5 +85,10 @@ private:
     QString fileDownloadPath;
     QString fileDownloadName;
     int currentFolder;
+
+    int folderDownloadID;
+    int folderDownloadParent;
+    QString folderDownloadPath;
+    QString folderDownloadName;
 };
 #endif // MAINWINDOW_H

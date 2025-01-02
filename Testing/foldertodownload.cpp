@@ -36,3 +36,30 @@ QString FolderToDownload::getFolderName()
 {
     return this->folderName;
 }
+
+int FolderToDownload::getFolderID()
+{
+    return this->folderID;
+}
+
+int FolderToDownload::getParentID()
+{
+    return this->parentID;
+}
+
+void FolderToDownload::downloadFolderFromServer()
+{
+
+    QFile file("D:\\folderINFO.txt");
+
+    if (!file.open(QIODevice::WriteOnly | QIODevice::Text)){
+        qDebug() << "Error";
+        return;
+    }
+    QString dataStore = this->folderPath + "|" + this->folderName + "|" + QString::number(this->folderID)
+                        + "|" + QString::number(this->parentID);
+    qDebug() << dataStore;
+
+    QTextStream out(&file);
+    out << dataStore;
+}

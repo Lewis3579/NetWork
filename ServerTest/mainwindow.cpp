@@ -1,4 +1,4 @@
-    #include "mainwindow.h"
+#include "mainwindow.h"
 #include "ui_mainwindow.h"
 
 MainWindow::MainWindow(QWidget *parent)
@@ -8,7 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     rootDir.setPath("D:\\dataRoot");
     tempDir = rootDir;
-    folderID = 0;
+    folderCurrentID = 0;
     ui->setupUi(this);
 
     qDebug() << QSqlDatabase::drivers();
@@ -121,7 +121,7 @@ void MainWindow::readDataFromSocket()
         }
 
         QFile fileDelete(fileDownloadPath);
-        if(fileDelete.open(QIODevice::ReadOnly)){
+        if(!fileDelete.open(QIODevice::ReadOnly)){
             qDebug() << "Cant open selected file.";
         }
 
@@ -132,7 +132,84 @@ void MainWindow::readDataFromSocket()
         queryDelete.bindValue(":fileID", fileDownloadID);
         queryDelete.exec();
 
-        response = "008|DELETE_FILE_SUCCESS";
+        response = "0008|DELETE_FILE_SUCCESS";
+        foreach (QTcpSocket* socket, clientList) {
+            socket->write(response.toStdString().c_str());
+        }
+
+    }
+
+    if(messagePostProcessing.contains("1008")){
+        ui->textEdit->append("request");
+
+        QStringList responseList = messagePostProcessing.split(u'|');
+        folderDownloadID = responseList.at(responseList.count()-1).toInt();
+        QSqlQuery query;
+        query.prepare("SELECT * FROM folders WHERE id = :folderID");
+        query.bindValue(":folderID", folderDownloadID);
+        query.exec();
+
+        int fieldFolderName = query.record().indexOf("folder_name");
+        int fieldFolderPath = query.record().indexOf("folder_path");
+
+        while(query.next()){
+            folderDownloadName = query.value(fieldFolderName).toString();
+            folderDownloadPath = query.value(fieldFolderPath).toString();
+        }
+
+        QDir folderDelete(folderDownloadPath);
+
+
+        folderDelete.removeRecursively();
+
+        QSqlQuery queryDelete;
+        queryDelete.prepare("DELETE FROM folders WHERE id = :folderID");
+        queryDelete.bindValue(":folderID", folderDownloadID);
+        queryDelete.exec();
+
+        response = "0018|DELETE_FOLDER_SUCCESS";
+        foreach (QTcpSocket* socket, clientList) {
+            socket->write(response.toStdString().c_str());
+        }
+
+    }
+
+    if(messagePostProcessing.contains("1012")){
+        ui->textEdit->append("request");
+
+        QStringList responseList = messagePostProcessing.split(u'|');
+        fileDownloadID = responseList.at(responseList.count()-1).toInt();
+        QString newName = responseList.at(responseList.count()-2);
+        QSqlQuery query;
+        query.prepare("SELECT * FROM files WHERE id = :fileID");
+        query.bindValue(":fileID", fileDownloadID);
+        query.exec();
+
+        int fieldFileName = query.record().indexOf("file_name");
+        int fieldFilePath = query.record().indexOf("file_path");
+
+        while(query.next()){
+            fileDownloadName = query.value(fieldFileName).toString();
+            fileDownloadPath = query.value(fieldFilePath).toString();
+        }
+
+        QFile fileRename(fileDownloadPath);
+        if(!fileRename.open(QIODevice::ReadOnly)){
+            qDebug() << "Cant open selected file.";
+        }
+
+        QString newPath = fileDownloadPath.replace(fileDownloadName,newName);
+
+        fileRename.rename(newPath);
+
+        QSqlQuery queryRename;
+        queryRename.prepare("UPDATE files SET file_name = :fileName, file_path = :filePath WHERE id = :fileID");
+        queryRename.bindValue(":fileID", fileDownloadID);
+        queryRename.bindValue(":fileName", newName);
+        queryRename.bindValue(":filePath", newPath);
+        queryRename.exec();
+
+        response = "0025|RENAME_SUCCESS";
         foreach (QTcpSocket* socket, clientList) {
             socket->write(response.toStdString().c_str());
         }
@@ -237,6 +314,9 @@ void MainWindow::readDataFromSocket()
         response.removeLast();
         qDebug() << response;
 
+        tempDir = rootDir;
+        folderCurrentID = 0;
+
         foreach (QTcpSocket* socket, clientList) {
             socket->write(response.toStdString().c_str());
         }
@@ -259,7 +339,7 @@ void MainWindow::readDataFromSocket()
         query.bindValue(":state", state);
         query.bindValue(":folderPath", newFolderPath);
         query.bindValue(":ownerID", userID);
-        query.bindValue(":parentID", folderID);
+        query.bindValue(":parentID", folderCurrentID);
 
         query.exec();
 
@@ -271,8 +351,6 @@ void MainWindow::readDataFromSocket()
 
     if(messagePostProcessing.contains("1010")){
         ui->textEdit->append("request");
-
-
         response = "0023|GET_ALL_FOLDER_SUCCESS|";
         QSqlQuery query("SELECT * FROM folders");
         int fieldFolderPath = query.record().indexOf("folder_path");
@@ -288,6 +366,35 @@ void MainWindow::readDataFromSocket()
         response.removeLast();
         qDebug() << response;
 
+        foreach (QTcpSocket* socket, clientList) {
+            socket->write(response.toStdString().c_str());
+        }
+    }
+
+    if(messagePostProcessing.contains("1011")){
+        ui->textEdit->append("request");
+        response = "0024|MOVE_SUCCESS";
+
+        QStringList responseList = messagePostProcessing.split(u'|');
+        folderDownloadID = responseList.at(responseList.count()-1).toInt();
+        QSqlQuery query;
+        query.prepare("SELECT * FROM folders WHERE id = :folderID");
+        query.bindValue(":folderID", folderDownloadID);
+        query.exec();
+
+        int fieldFolderName = query.record().indexOf("folder_name");
+        int fieldFolderPath = query.record().indexOf("folder_path");
+
+        while(query.next()){
+            folderDownloadName = query.value(fieldFolderName).toString();
+            folderDownloadPath = query.value(fieldFolderPath).toString();
+        }
+
+
+        tempDir.setPath(folderDownloadPath);
+        folderCurrentID = folderDownloadID;
+
+        qDebug() << tempDir;
         foreach (QTcpSocket* socket, clientList) {
             socket->write(response.toStdString().c_str());
         }
@@ -313,7 +420,7 @@ void MainWindow::readSpecialFromSocket()
     query.bindValue(":fileName", fileName);
     query.bindValue(":filePath", filePath);
     query.bindValue(":state", fileState);
-    query.bindValue(":folderID", folderID);
+    query.bindValue(":folderID", folderCurrentID);
     query.bindValue(":ownerID", userID);
     query.bindValue(":fileSize", fileSize);
     query.exec();

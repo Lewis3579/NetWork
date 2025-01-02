@@ -23,6 +23,7 @@ MainWindow::MainWindow(QWidget *parent)
 
     signUpWindow = new SignUp(this, socket);
     //scrollLayout->setAlignment(Qt::AlignTop);
+
 }
 
 MainWindow::~MainWindow()
@@ -100,8 +101,8 @@ void MainWindow::readDataFromSocket(){
         }
 
         for(int i = 0; i<fileList.count();i++){
-            scrollLayout->addWidget(fileList[i]->getFileButton());
-            connect(fileList[i]->getFileButton(), SIGNAL(clicked()), fileList[i], SLOT(downloadFromServer()));
+            if(fileList[i]->getFolderID()==currentFolder) scrollLayout->addWidget(fileList[i]->getFileButton());
+            connect(fileList[i]->getFileButton(), SIGNAL(clicked()), fileList[i], SLOT(downloadFileFromServer()));
         }
         scrollWidget->setLayout(scrollLayout);
         ui->scrollArea->setWidget(scrollWidget);
@@ -119,19 +120,31 @@ void MainWindow::readDataFromSocket(){
         QStringList folderPathList = response.split(u'|');
         for(int i = 2; i < folderPathList.count();i++){
 
+            FolderToDownload* folderButton = new FolderToDownload();
             QStringList fileInfoList = folderPathList[i].split(u'#');
-            qDebug() << (fileInfoList.at(0).toInt());
-            qDebug() <<(fileInfoList.at(1).toInt());
+            folderButton->setFolderID(fileInfoList.at(0).toInt());
+            folderButton->setParentID((fileInfoList.at(1).toInt()));
 
 
-            qDebug() <<(fileInfoList.at(fileInfoList.count()-1));
-            //QPushButton* pushButton = new QPushButton();
-            //pushButton->setIcon(QIcon(":/folder_icon.png"));
+            folderButton->setFolderPath(fileInfoList.at(fileInfoList.count()-1));
+            QPushButton* pushButton = new QPushButton();
+            pushButton->setIcon(QIcon(":/folder_icon.png"));
 
             QStringList fileNameList = folderPathList[i].split(u'/');
-            //pushButton->setText(fileNameList.at(fileNameList.count()-1));
-            qDebug() <<(fileNameList.at(fileNameList.count()-1));
+            pushButton->setText(fileNameList.at(fileNameList.count()-1));
+            folderButton->setFolderName(fileNameList.at(fileNameList.count()-1));
+            folderButton->setFolderButton(pushButton);
+
+            folderList.append(folderButton);
         }
+
+        for(int i = 0; i<folderList.count();i++){
+            if(folderList[i]->getParentID()==currentFolder&&folderList[i]->getFolderID()!=0) scrollLayout->addWidget(folderList[i]->getFolderButton());
+            connect(folderList[i]->getFolderButton(), SIGNAL(clicked()), folderList[i], SLOT(downloadFolderFromServer()));
+        }
+
+        scrollWidget->setLayout(scrollLayout);
+        ui->scrollArea->setWidget(scrollWidget);
     }
 }
 
@@ -277,6 +290,12 @@ void MainWindow::on_pushButton_4_clicked()
         scrollLayout->removeWidget(fileList[i]->getFileButton());
         fileList[i]->getFileButton()->hide();
     }
+
+    for(int i = 0; i<folderList.count();i++){
+        scrollLayout->removeWidget(folderList[i]->getFolderButton());
+        folderList[i]->getFolderButton()->hide();
+    }
+
     scrollWidget->setLayout(scrollLayout);
     ui->scrollArea->setWidget(scrollWidget);
 
@@ -297,6 +316,11 @@ void MainWindow::on_lineEdit_2_textChanged(const QString &textInLine)
     for(int i = 0; i<fileList.count();i++){
         scrollLayout->removeWidget(fileList[i]->getFileButton());
         fileList[i]->getFileButton()->hide();
+    }
+
+    for(int i = 0; i<folderList.count();i++){
+        scrollLayout->removeWidget(folderList[i]->getFolderButton());
+        folderList[i]->getFolderButton()->hide();
     }
     scrollWidget->setLayout(scrollLayout);
     ui->scrollArea->setWidget(scrollWidget);
@@ -387,6 +411,88 @@ void MainWindow::on_pushButton_8_clicked()
 
 void MainWindow::on_pushButton_9_clicked()
 {
+    QFile folder("D:\\folderINFO.txt");
+    if(!folder.open(QIODevice::ReadOnly|QIODevice::Text)){
+        qDebug() << "Cannot read folder info";
+    }
 
+    QString info = folder.readAll();
+    QStringList infoList = info.split(u'|');
+    folderDownloadPath = infoList.at(0);
+    folderDownloadName = infoList.at(1);
+    folderDownloadID = infoList.at(2).toInt();
+    folderDownloadParent = infoList.at(3).toInt();
+
+    for(int i = 0; i<fileList.count();i++){
+        scrollLayout->removeWidget(fileList[i]->getFileButton());
+        fileList[i]->getFileButton()->hide();
+    }
+
+    for(int i = 0; i<folderList.count();i++){
+        scrollLayout->removeWidget(folderList[i]->getFolderButton());
+        folderList[i]->getFolderButton()->hide();
+    }
+    scrollWidget->setLayout(scrollLayout);
+    ui->scrollArea->setWidget(scrollWidget);
+
+    for(int i = 0; i<fileList.count();i++){
+        if(fileList[i]->getFolderID()==folderDownloadID) {
+            scrollLayout->addWidget(fileList[i]->getFileButton());
+            fileList[i]->getFileButton()->show();
+        }
+    }
+
+    for(int i = 0; i<folderList.count();i++){
+        if(folderList[i]->getParentID()==folderDownloadID&&folderList[i]->getFolderID()!=0) {
+            scrollLayout->addWidget(folderList[i]->getFolderButton());
+            folderList[i]->getFolderButton()->show();
+        }
+    }
+
+    scrollWidget->setLayout(scrollLayout);
+    ui->scrollArea->setWidget(scrollWidget);
+
+    request = "1011|MOVE_TO|" + QString::number( folderDownloadID);
+    sendData(request);
+}
+
+
+void MainWindow::on_pushButton_10_clicked()
+{
+
+    QFile folder("D:\\folderINFO.txt");
+    if(!folder.open(QIODevice::ReadOnly|QIODevice::Text)){
+        qDebug() << "Cannot read folder info";
+    }
+
+    QString info = folder.readAll();
+    QStringList infoList = info.split(u'|');
+    folderDownloadPath = infoList.at(0);
+    folderDownloadName = infoList.at(1);
+    folderDownloadID = infoList.at(2).toInt();
+    folderDownloadParent = infoList.at(3).toInt();
+
+    request = "1008|DELETE_FOLDER|" + QString::number( folderDownloadID);
+    sendData(request);
+}
+
+
+void MainWindow::on_pushButton_11_clicked()
+{
+    QFile file("D:\\fileINFO.txt");
+    if(!file.open(QIODevice::ReadOnly|QIODevice::Text)){
+        qDebug() << "Cannot read file info";
+    }
+
+    QString info = file.readAll();
+    QStringList infoList = info.split(u'|');
+    fileDownloadPath = infoList.at(0);
+    fileDownloadName = infoList.at(1);
+    fileDownloadID = infoList.at(2).toInt();
+    fileDownloadFolder = infoList.at(3).toInt();
+    fileDownloadSize = infoList.at(4).toInt();
+
+    request = "1012|RENAME_FILE|" + this->ui->lineEdit_4->text() + "|" + QString::number( fileDownloadID);
+    sendData(request);
 }
 

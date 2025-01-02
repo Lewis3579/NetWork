@@ -36,7 +36,7 @@ namespace {
 struct qt_meta_stringdata_CLASSFileToDownloadENDCLASS_t {};
 constexpr auto qt_meta_stringdata_CLASSFileToDownloadENDCLASS = QtMocHelpers::stringData(
     "FileToDownload",
-    "downloadFromServer",
+    "downloadFileFromServer",
     ""
 );
 #else  // !QT_MOC_HAS_STRINGDATA
@@ -75,7 +75,7 @@ Q_CONSTINIT const QMetaObject FileToDownload::staticMetaObject = { {
     qt_incomplete_metaTypeArray<qt_meta_stringdata_CLASSFileToDownloadENDCLASS_t,
         // Q_OBJECT / Q_GADGET
         QtPrivate::TypeAndForceComplete<FileToDownload, std::true_type>,
-        // method 'downloadFromServer'
+        // method 'downloadFileFromServer'
         QtPrivate::TypeAndForceComplete<void, std::false_type>
     >,
     nullptr
@@ -87,7 +87,7 @@ void FileToDownload::qt_static_metacall(QObject *_o, QMetaObject::Call _c, int _
         auto *_t = static_cast<FileToDownload *>(_o);
         (void)_t;
         switch (_id) {
-        case 0: _t->downloadFromServer(); break;
+        case 0: _t->downloadFileFromServer(); break;
         default: ;
         }
     }

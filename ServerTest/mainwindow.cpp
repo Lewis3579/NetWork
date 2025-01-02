@@ -85,8 +85,32 @@ void MainWindow::readDataFromSocket()
         query.prepare("SELECT * FROM files WHERE id = :fileID");
         query.bindValue(":fileID", fileDownloadID);
         query.exec();
+        int fieldFileName = query.record().indexOf("file_name");
+        int fieldFilePath = query.record().indexOf("file_path");
 
+        while(query.next()){
+            fileDownloadName = query.value(fieldFileName).toString();
+            fileDownloadPath = query.value(fieldFilePath).toString();
+        }
+        QFile fileDownLoad(fileDownloadPath);
+        if(fileDownLoad.open(QIODevice::ReadOnly)){
+            qDebug() << "Cant open selected file.";
+        }
+        QByteArray buffer =fileDownLoad.readAll();
+        foreach (QTcpSocket* socket, clientList) {
+            socket->write(buffer);
+        }
+    }
 
+    if(messagePostProcessing.contains("1004")){
+        ui->textEdit->append("request");
+
+        QStringList responseList = messagePostProcessing.split(u'|');
+        fileDownloadID = responseList.at(responseList.count()-1).toInt();
+        QSqlQuery query;
+        query.prepare("SELECT * FROM files WHERE id = :fileID");
+        query.bindValue(":fileID", fileDownloadID);
+        query.exec();
 
         int fieldFileName = query.record().indexOf("file_name");
         int fieldFilePath = query.record().indexOf("file_path");
@@ -96,14 +120,21 @@ void MainWindow::readDataFromSocket()
             fileDownloadPath = query.value(fieldFilePath).toString();
         }
 
-        QFile fileDownLoad(fileDownloadPath);
-        if(fileDownLoad.open(QIODevice::ReadOnly)){
+        QFile fileDelete(fileDownloadPath);
+        if(fileDelete.open(QIODevice::ReadOnly)){
             qDebug() << "Cant open selected file.";
         }
 
-        QByteArray buffer =fileDownLoad.readAll();
+        fileDelete.remove();
+
+        QSqlQuery queryDelete;
+        queryDelete.prepare("DELETE FROM files WHERE id = :fileID");
+        queryDelete.bindValue(":fileID", fileDownloadID);
+        queryDelete.exec();
+
+        response = "008|DELETE_FILE_SUCCESS";
         foreach (QTcpSocket* socket, clientList) {
-            socket->write(buffer);
+            socket->write(response.toStdString().c_str());
         }
 
     }
@@ -237,7 +268,32 @@ void MainWindow::readDataFromSocket()
             socket->write(response.toStdString().c_str());
         }
     }
+
+    if(messagePostProcessing.contains("1010")){
+        ui->textEdit->append("request");
+
+
+        response = "0023|GET_ALL_FOLDER_SUCCESS|";
+        QSqlQuery query("SELECT * FROM folders");
+        int fieldFolderPath = query.record().indexOf("folder_path");
+        int fieldFolderID = query.record().indexOf("id");
+        int fieldParentID = query.record().indexOf("parent_id");
+        while (query.next()) {
+            QString folderPathFromDB = query.value(fieldFolderPath).toString();
+            QString folderIDFromDB = query.value(fieldFolderID).toString();
+            QString parentIDFromDB = query.value(fieldParentID).toString();
+            response=response + folderIDFromDB + "#" + parentIDFromDB + "#" + folderPathFromDB +"|";
+        }
+
+        response.removeLast();
+        qDebug() << response;
+
+        foreach (QTcpSocket* socket, clientList) {
+            socket->write(response.toStdString().c_str());
+        }
+    }
 }
+
 
 void MainWindow::readSpecialFromSocket()
 {

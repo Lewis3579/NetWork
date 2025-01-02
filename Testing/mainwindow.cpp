@@ -45,6 +45,11 @@ void MainWindow::readDataFromSocket(){
         //qDebug() << buffer;
         socket->write(buffer);
     }
+
+    if(response.contains("0008")){
+        ui->textEdit->append("response");
+        ui->textEdit->append("response");
+    }
     if(response.contains("0010")){
         ui->textEdit->append("response");
         signInWindow->hide();
@@ -84,6 +89,7 @@ void MainWindow::readDataFromSocket(){
 
             fileButton->setFilePath(fileInfoList.at(fileInfoList.count()-1));
             QPushButton* pushButton = new QPushButton();
+            pushButton->setIcon(QIcon(":/file_icon.png"));
 
             QStringList fileNameList = filePathList[i].split(u'/');
             pushButton->setText(fileNameList.at(fileNameList.count()-1));
@@ -99,10 +105,33 @@ void MainWindow::readDataFromSocket(){
         }
         scrollWidget->setLayout(scrollLayout);
         ui->scrollArea->setWidget(scrollWidget);
+
+        request = "1010|LIST_FOLDER";
+        sendData(request);
     }
 
     if(response.contains("0015")){
         ui->textEdit->append("response");
+    }
+
+    if(response.contains("0023")){
+        ui->textEdit->append("response");
+        QStringList folderPathList = response.split(u'|');
+        for(int i = 2; i < folderPathList.count();i++){
+
+            QStringList fileInfoList = folderPathList[i].split(u'#');
+            qDebug() << (fileInfoList.at(0).toInt());
+            qDebug() <<(fileInfoList.at(1).toInt());
+
+
+            qDebug() <<(fileInfoList.at(fileInfoList.count()-1));
+            //QPushButton* pushButton = new QPushButton();
+            //pushButton->setIcon(QIcon(":/folder_icon.png"));
+
+            QStringList fileNameList = folderPathList[i].split(u'/');
+            //pushButton->setText(fileNameList.at(fileNameList.count()-1));
+            qDebug() <<(fileNameList.at(fileNameList.count()-1));
+        }
     }
 }
 
@@ -186,6 +215,15 @@ void MainWindow::on_pushButton_2_clicked()
 void MainWindow::sendData(QString bufferString)
 {
 
+    QFile log("D:\\log.txt");
+    if(!log.open(QIODevice::Append|QIODevice::Text)){
+        qDebug() << "Can not open log";
+    }
+
+    QTextStream out(&log);
+    out << QTime::currentTime().toString() << "\n";
+    out << bufferString << "\n";
+
     if(socket){
         if(socket->isOpen()){
             socket->write(bufferString.toStdString().c_str());
@@ -243,10 +281,13 @@ void MainWindow::on_pushButton_4_clicked()
     ui->scrollArea->setWidget(scrollWidget);
 
     fileList.clear();
+    folderList.clear();
     scrollLayout->setAlignment(Qt::AlignTop);
 
     request = "1003|LIST_FILE";
     sendData(request);
+
+    currentFolder = 0;
 
 }
 
@@ -314,12 +355,38 @@ void MainWindow::on_pushButton_7_clicked()
     fileDownloadFolder = infoList.at(3).toInt();
     fileDownloadSize = infoList.at(4).toInt();
 
-    qDebug() << fileDownloadSize;
 
     request = "1001|DOWNLOAD|" + QString::number( fileDownloadID);
     sendData(request);
 
     disconnect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
     connect(socket, SIGNAL(readyRead()), this, SLOT(downloadDataFromSocket()));
+}
+
+
+void MainWindow::on_pushButton_8_clicked()
+{
+
+    QFile file("D:\\fileINFO.txt");
+    if(!file.open(QIODevice::ReadOnly|QIODevice::Text)){
+        qDebug() << "Cannot read file info";
+    }
+
+    QString info = file.readAll();
+    QStringList infoList = info.split(u'|');
+    fileDownloadPath = infoList.at(0);
+    fileDownloadName = infoList.at(1);
+    fileDownloadID = infoList.at(2).toInt();
+    fileDownloadFolder = infoList.at(3).toInt();
+    fileDownloadSize = infoList.at(4).toInt();
+
+    request = "1004|DELETE_FILE|" + QString::number( fileDownloadID);
+    sendData(request);
+}
+
+
+void MainWindow::on_pushButton_9_clicked()
+{
+
 }
 

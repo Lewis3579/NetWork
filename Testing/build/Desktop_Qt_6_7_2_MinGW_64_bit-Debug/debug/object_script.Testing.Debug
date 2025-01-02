@@ -1,10 +1,12 @@
 debug/filetodownload.o
+debug/foldertodownload.o
 debug/main.o
 debug/mainwindow.o
 debug/signin.o
 debug/signup.o
 debug/qrc_Resource.o
 debug/moc_filetodownload.o
+debug/moc_foldertodownload.o
 debug/moc_mainwindow.o
 debug/moc_signin.o
 debug/moc_signup.o

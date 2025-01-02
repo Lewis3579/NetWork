@@ -1,5 +1,7 @@
 <RCC>
     <qresource prefix="/">
-        <file>fileINFO.txt</file>
+        <file>log.txt</file>
+        <file>file_icon.png</file>
+        <file>folder_icon.png</file>
     </qresource>
 </RCC>

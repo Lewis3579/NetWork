@@ -10,6 +10,7 @@ CONFIG += c++17
 
 SOURCES += \
     filetodownload.cpp \
+    foldertodownload.cpp \
     main.cpp \
     mainwindow.cpp \
     signin.cpp \
@@ -17,6 +18,7 @@ SOURCES += \
 
 HEADERS += \
     filetodownload.h \
+    foldertodownload.h \
     mainwindow.h \
     signin.h \
     signup.h

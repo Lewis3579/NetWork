@@ -7,7 +7,11 @@
 #include <signin.h>
 #include <signup.h>
 #include "filetodownload.h"
+#include "foldertodownload.h"
 #include <QResource>
+#include <QIcon>
+#include <QTimer>
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -45,6 +49,10 @@ private slots:
 
     void on_pushButton_7_clicked();
 
+    void on_pushButton_8_clicked();
+
+    void on_pushButton_9_clicked();
+
 private:
     Ui::MainWindow *ui;
     void sendData(QString bufferString);
@@ -57,6 +65,7 @@ public:
     SignIn* signInWindow;
     SignUp* signUpWindow;
     QList<FileToDownload*> fileList;
+    QList<FolderToDownload*> folderList;
     QVBoxLayout* scrollLayout;
     QWidget *scrollWidget;
 
@@ -71,5 +80,6 @@ private:
     int fileDownloadFolder;
     QString fileDownloadPath;
     QString fileDownloadName;
+    int currentFolder;
 };
 #endif // MAINWINDOW_H

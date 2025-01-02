@@ -45,6 +45,11 @@ public:
     QCheckBox *checkBox;
     QCheckBox *checkBox_2;
     QPushButton *pushButton_7;
+    QPushButton *pushButton_8;
+    QPushButton *pushButton_9;
+    QPushButton *pushButton_10;
+    QPushButton *pushButton_11;
+    QLineEdit *lineEdit_4;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -108,6 +113,21 @@ public:
         pushButton_7 = new QPushButton(centralwidget);
         pushButton_7->setObjectName("pushButton_7");
         pushButton_7->setGeometry(QRect(700, 480, 101, 29));
+        pushButton_8 = new QPushButton(centralwidget);
+        pushButton_8->setObjectName("pushButton_8");
+        pushButton_8->setGeometry(QRect(810, 480, 101, 29));
+        pushButton_9 = new QPushButton(centralwidget);
+        pushButton_9->setObjectName("pushButton_9");
+        pushButton_9->setGeometry(QRect(920, 480, 93, 29));
+        pushButton_10 = new QPushButton(centralwidget);
+        pushButton_10->setObjectName("pushButton_10");
+        pushButton_10->setGeometry(QRect(1022, 480, 101, 29));
+        pushButton_11 = new QPushButton(centralwidget);
+        pushButton_11->setObjectName("pushButton_11");
+        pushButton_11->setGeometry(QRect(700, 530, 93, 29));
+        lineEdit_4 = new QLineEdit(centralwidget);
+        lineEdit_4->setObjectName("lineEdit_4");
+        lineEdit_4->setGeometry(QRect(810, 530, 311, 26));
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
@@ -129,13 +149,17 @@ public:
         pushButton_2->setText(QCoreApplication::translate("MainWindow", "Choose files", nullptr));
         label->setText(QCoreApplication::translate("MainWindow", "File URLs", nullptr));
         pushButton_3->setText(QCoreApplication::translate("MainWindow", "Sign Out", nullptr));
-        pushButton_4->setText(QCoreApplication::translate("MainWindow", "Get List of files to download", nullptr));
+        pushButton_4->setText(QCoreApplication::translate("MainWindow", "Get List of files/folder architecture to download", nullptr));
         label_2->setText(QCoreApplication::translate("MainWindow", "Search", nullptr));
         pushButton_5->setText(QCoreApplication::translate("MainWindow", "Up Load", nullptr));
         pushButton_6->setText(QCoreApplication::translate("MainWindow", "Create new folder", nullptr));
         checkBox->setText(QCoreApplication::translate("MainWindow", "Private", nullptr));
         checkBox_2->setText(QCoreApplication::translate("MainWindow", "Private", nullptr));
-        pushButton_7->setText(QCoreApplication::translate("MainWindow", "Download", nullptr));
+        pushButton_7->setText(QCoreApplication::translate("MainWindow", "Download File", nullptr));
+        pushButton_8->setText(QCoreApplication::translate("MainWindow", "Delete File", nullptr));
+        pushButton_9->setText(QCoreApplication::translate("MainWindow", "Enter Folder", nullptr));
+        pushButton_10->setText(QCoreApplication::translate("MainWindow", "Delete Folder", nullptr));
+        pushButton_11->setText(QCoreApplication::translate("MainWindow", "Rename File", nullptr));
     } // retranslateUi
 
 };

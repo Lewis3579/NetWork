@@ -5,6 +5,10 @@ MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
     , ui(new Ui::MainWindow)
 {
+
+    rootDir.setPath("D:\\dataRoot");
+    tempDir = rootDir;
+    folderID = 0;
     ui->setupUi(this);
 
     qDebug() << QSqlDatabase::drivers();
@@ -62,6 +66,7 @@ void MainWindow::readDataFromSocket()
         fileName = responseList.at(responseList.count()-2);
 
         fileSize = responseList.at(responseList.count()-1).toInt();
+        fileState = responseList.at(responseList.count()-3);
         qDebug() << fileName;
         response = "0000|UPLOAD_SUCCESS";
         foreach (QTcpSocket* socket, clientList) {
@@ -69,6 +74,38 @@ void MainWindow::readDataFromSocket()
         }
         disconnect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
         connect(socket, SIGNAL(readyRead()), this, SLOT(readSpecialFromSocket()));
+    }
+
+    if(messagePostProcessing.contains("1001")){
+        ui->textEdit->append("request");
+
+        QStringList responseList = messagePostProcessing.split(u'|');
+        fileDownloadID = responseList.at(responseList.count()-1).toInt();
+        QSqlQuery query;
+        query.prepare("SELECT * FROM files WHERE id = :fileID");
+        query.bindValue(":fileID", fileDownloadID);
+        query.exec();
+
+
+
+        int fieldFileName = query.record().indexOf("file_name");
+        int fieldFilePath = query.record().indexOf("file_path");
+
+        while(query.next()){
+            fileDownloadName = query.value(fieldFileName).toString();
+            fileDownloadPath = query.value(fieldFilePath).toString();
+        }
+
+        QFile fileDownLoad(fileDownloadPath);
+        if(fileDownLoad.open(QIODevice::ReadOnly)){
+            qDebug() << "Cant open selected file.";
+        }
+
+        QByteArray buffer =fileDownLoad.readAll();
+        foreach (QTcpSocket* socket, clientList) {
+            socket->write(buffer);
+        }
+
     }
 
     if(messagePostProcessing.contains("1005")){
@@ -84,6 +121,7 @@ void MainWindow::readDataFromSocket()
         QSqlQuery query("SELECT * FROM users");
         int fieldUserName = query.record().indexOf("username");
         int fieldPassword = query.record().indexOf("password");
+        int fieldID = query.record().indexOf("id");
         bool existedUsername = false;
         while (query.next()) {
             QString usernameFromDB = query.value(fieldUserName).toString();
@@ -96,6 +134,8 @@ void MainWindow::readDataFromSocket()
                     foreach (QTcpSocket* socket, clientList) {
                         socket->write(response.toStdString().c_str());
                     }
+                    userID = query.value(fieldID).toInt();
+                    qDebug() << userID;
                 }
                 else{
                     response = "0011|WRONG_PASSWORD";
@@ -151,15 +191,48 @@ void MainWindow::readDataFromSocket()
 
         response = "0006|GET_ALL_FILE_SUCCESS|";
         QSqlQuery query("SELECT * FROM files");
-        int fieldFileName = query.record().indexOf("file_name");
+        int fieldFilePath = query.record().indexOf("file_path");
+        int fieldFileID = query.record().indexOf("id");
+        int fieldFolderID = query.record().indexOf("folder_id");
+        int fieldFileSize = query.record().indexOf("file_size");
         while (query.next()) {
-            QString filenameFromDB = query.value(fieldFileName).toString();
-            response=response+filenameFromDB+"|";
+            QString filePathFromDB = query.value(fieldFilePath).toString();
+            QString fileIDFromDB = query.value(fieldFileID).toString();
+            QString folderIDFromDB = query.value(fieldFolderID).toString();
+            QString fileSizeFromDB = query.value(fieldFileSize).toString();
+            response=response + fileIDFromDB + "#" + folderIDFromDB + "#" + fileSizeFromDB + "#" +filePathFromDB+"|";
         }
 
         response.removeLast();
         qDebug() << response;
 
+        foreach (QTcpSocket* socket, clientList) {
+            socket->write(response.toStdString().c_str());
+        }
+    }
+
+    if(messagePostProcessing.contains("1007")){
+        ui->textEdit->append("request");
+        QStringList folderNameList = messagePostProcessing.split(u'|');
+        QString newFolderName = folderNameList.at(folderNameList.count()-1);
+        QString state = folderNameList.at(folderNameList.count()-2);
+        tempDir.mkdir(newFolderName);
+
+        QString newFolderPath = tempDir.absoluteFilePath(newFolderName);
+        qDebug() << newFolderPath;
+
+        QSqlQuery query;
+        query.prepare("INSERT INTO folders(folder_name,folder_path ,state, owner_id, parent_id) "
+                      "VALUES (:folderName,:folderPath, :state, :ownerID, :parentID)");
+        query.bindValue(":folderName", newFolderName);
+        query.bindValue(":state", state);
+        query.bindValue(":folderPath", newFolderPath);
+        query.bindValue(":ownerID", userID);
+        query.bindValue(":parentID", folderID);
+
+        query.exec();
+
+        response = "0015|CREATE_FOLDER_SUCCESS";
         foreach (QTcpSocket* socket, clientList) {
             socket->write(response.toStdString().c_str());
         }
@@ -171,7 +244,7 @@ void MainWindow::readSpecialFromSocket()
     QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
     QByteArray messageFromServer = socket->readAll();
     //qDebug() << messageFromServer;
-    QString filePath = "D:\\dataRoot\\" + fileName;
+    QString filePath = tempDir.absolutePath() + "/" + fileName;
     QFile file(filePath);
     if(!file.open(QIODevice::WriteOnly)){
         qDebug() << "Cant open selected file.";
@@ -179,11 +252,15 @@ void MainWindow::readSpecialFromSocket()
     file.write(messageFromServer);
 
     QSqlQuery query;
-    query.prepare("INSERT INTO files (filename) "
-                  "VALUES (:filename)");
-    query.bindValue(":filename", fileName);
+    query.prepare("INSERT INTO files (file_name,file_path,state,folder_id,owner_id, file_size) "
+                  "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
+    query.bindValue(":fileName", fileName);
+    query.bindValue(":filePath", filePath);
+    query.bindValue(":state", fileState);
+    query.bindValue(":folderID", folderID);
+    query.bindValue(":ownerID", userID);
+    query.bindValue(":fileSize", fileSize);
     query.exec();
-
 
     fileSize = fileSize - messageFromServer.size();
     ui->textEdit->append(QString::number(fileSize));
@@ -245,4 +322,6 @@ void MainWindow::on_pushButton_2_clicked()
         }
     }
 }
+
+
 

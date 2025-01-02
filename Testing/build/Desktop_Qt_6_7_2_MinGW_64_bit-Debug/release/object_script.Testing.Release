@@ -1,0 +1,10 @@
+release/filetodownload.o
+release/main.o
+release/mainwindow.o
+release/signin.o
+release/signup.o
+release/qrc_Resource.o
+release/moc_filetodownload.o
+release/moc_mainwindow.o
+release/moc_signin.o
+release/moc_signup.o

@@ -15,6 +15,8 @@
 #include <QSqlQuery>
 #include <QSqlRecord>
 #include <QSqlError>
+#include <QDir>
+#include <QDialog>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -38,6 +40,7 @@ private slots:
 
     void on_pushButton_2_clicked();
 
+
 private:
     Ui::MainWindow *ui;
     QTcpServer *server;
@@ -49,5 +52,14 @@ private:
     QString response;
     QString fileName;
     int fileSize;
+    QDir rootDir;
+    int userID;
+    int folderID;
+    QDir tempDir;
+    QString fileState;
+
+    int fileDownloadID;
+    QString fileDownloadPath;
+    QString fileDownloadName;
 };
 #endif // MAINWINDOW_H

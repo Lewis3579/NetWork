@@ -74,21 +74,81 @@ void MainWindow::readDataFromSocket(){
 
     if(response.contains("0006")){
         ui->textEdit->append("response");
-        QStringList filenameList = response.split(u'|');
-        for(int i = 2; i < filenameList.count();i++){
-            QPushButton* pushButton = new QPushButton();
-            pushButton->setText(filenameList[i]);
+        QStringList filePathList = response.split(u'|');
+        for(int i = 2; i < filePathList.count();i++){
             FileToDownload* fileButton = new FileToDownload();
+            QStringList fileInfoList = filePathList[i].split(u'#');
+            fileButton->setFileID(fileInfoList.at(0).toInt());
+            fileButton->setFolderID(fileInfoList.at(1).toInt());
+            fileButton->setFileSIze(fileInfoList.at(2).toInt());
+
+            fileButton->setFilePath(fileInfoList.at(fileInfoList.count()-1));
+            QPushButton* pushButton = new QPushButton();
+
+            QStringList fileNameList = filePathList[i].split(u'/');
+            pushButton->setText(fileNameList.at(fileNameList.count()-1));
+            fileButton->setFileName(fileNameList.at(fileNameList.count()-1));
+
             fileButton->setFileButton(pushButton);
             fileList.append(fileButton);
         }
 
         for(int i = 0; i<fileList.count();i++){
             scrollLayout->addWidget(fileList[i]->getFileButton());
-            connect(fileList[i]->getFileButton(), SIGNAL(clicked()), this, SLOT(downloadFromServer()));
+            connect(fileList[i]->getFileButton(), SIGNAL(clicked()), fileList[i], SLOT(downloadFromServer()));
         }
         scrollWidget->setLayout(scrollLayout);
         ui->scrollArea->setWidget(scrollWidget);
+    }
+
+    if(response.contains("0015")){
+        ui->textEdit->append("response");
+    }
+}
+
+void MainWindow::downloadDataFromSocket()
+{
+    QByteArray dataDownload = socket->readAll();
+    QString locationPath = "D:\\" + fileDownloadName;
+    QFile file(locationPath);
+
+    if(!file.open(QIODevice::WriteOnly)){
+        qDebug() << "Cant open selected file.";
+    }
+
+    file.write(dataDownload);
+
+    this->ui->textEdit->append(QString::number(fileDownloadSize));
+    fileDownloadSize = fileDownloadSize - dataDownload.size();
+
+    if(fileDownloadSize>0){
+        disconnect(socket, SIGNAL(readyRead()), this, SLOT(downloadDataFromSocket()));
+        connect(socket, SIGNAL(readyRead()), this, SLOT(downloadLargeDataFromSocket()));
+    }
+    else{
+        disconnect(socket, SIGNAL(readyRead()), this, SLOT(downloadDataFromSocket()));
+        connect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
+    }
+}
+
+void MainWindow::downloadLargeDataFromSocket()
+{
+    QByteArray dataDownload = socket->readAll();
+    QString locationPath = "D:\\" + fileDownloadName;
+    QFile file(locationPath);
+
+    if(!file.open(QIODevice::Append)){
+        qDebug() << "Cant open selected file.";
+    }
+
+    file.write(dataDownload);
+
+    this->ui->textEdit->append(QString::number(fileDownloadSize));
+    fileDownloadSize = fileDownloadSize - dataDownload.size();
+
+    if(fileDownloadSize <= 0){
+        disconnect(socket, SIGNAL(readyRead()), this, SLOT(downloadLargeDataFromSocket()));
+        connect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
     }
 }
 
@@ -111,12 +171,16 @@ void MainWindow::on_pushButton_2_clicked()
     buffer = file.readAll();
     request = "1000|UPLOAD|";
 
+    if(ui->checkBox->isChecked()){
+        request = request + "Private|";
+    }
+    else{
+        request = request + "Public|";
+    }
+
     QStringList pathList = filePath.split(u'/');
     QString fileName = pathList.at(pathList.count()-1);
     request = request + fileName + "|" + QString::number( buffer.size());
-
-    qDebug() << request;
-    sendData(request);
 }
 
 void MainWindow::sendData(QString bufferString)
@@ -183,22 +247,6 @@ void MainWindow::on_pushButton_4_clicked()
 
     request = "1003|LIST_FILE";
     sendData(request);
-/*
-    for(int i = 0; i < 20; i++){
-        QPushButton* pushButton = new QPushButton();
-        pushButton->setText(QString::number(i));
-
-        FileToDownload* fileButton = new FileToDownload();
-        fileButton->setFileButton(pushButton);
-        fileList.append(fileButton);
-    }
-
-    for(int i = 0; i<fileList.count();i++){
-        scrollLayout->addWidget(fileList[i]->getFileButton());
-    }
-    scrollWidget->setLayout(scrollLayout);
-    ui->scrollArea->setWidget(scrollWidget);
-*/
 
 }
 
@@ -223,9 +271,55 @@ void MainWindow::on_lineEdit_2_textChanged(const QString &textInLine)
     ui->scrollArea->setWidget(scrollWidget);
 }
 
-void MainWindow::downloadFromServer()
+
+
+void MainWindow::on_pushButton_5_clicked()
 {
-    qDebug() << "Clicked";
-    request = "1001|DOWNLOAD";
+    qDebug() << request;
     sendData(request);
 }
+
+
+void MainWindow::on_pushButton_6_clicked()
+{
+    if(ui->lineEdit_3->text().isEmpty()){
+        qDebug() << "You must enter folder name";
+    }
+    else{
+        request = "1007|CREATE_FOLDER|";
+        if(ui->checkBox_2->isChecked()){
+            request = request + "Private|";
+        }
+        else{
+            request = request + "Public|";
+        }
+        request = request + ui->lineEdit_3->text();
+        sendData(request);
+    }
+}
+
+
+void MainWindow::on_pushButton_7_clicked()
+{
+    QFile file("D:\\fileINFO.txt");
+    if(!file.open(QIODevice::ReadOnly|QIODevice::Text)){
+        qDebug() << "Cannot read file info";
+    }
+
+    QString info = file.readAll();
+    QStringList infoList = info.split(u'|');
+    fileDownloadPath = infoList.at(0);
+    fileDownloadName = infoList.at(1);
+    fileDownloadID = infoList.at(2).toInt();
+    fileDownloadFolder = infoList.at(3).toInt();
+    fileDownloadSize = infoList.at(4).toInt();
+
+    qDebug() << fileDownloadSize;
+
+    request = "1001|DOWNLOAD|" + QString::number( fileDownloadID);
+    sendData(request);
+
+    disconnect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
+    connect(socket, SIGNAL(readyRead()), this, SLOT(downloadDataFromSocket()));
+}
+

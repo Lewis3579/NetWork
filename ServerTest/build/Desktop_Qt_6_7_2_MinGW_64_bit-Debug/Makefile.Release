@@ -328,6 +328,13 @@ release/moc_mainwindow.cpp: ../../mainwindow.h \
 		C:/Qt/6.7.2/mingw_64/include/QtSql/qsqlrecord.h \
 		C:/Qt/6.7.2/mingw_64/include/QtSql/QSqlError \
 		C:/Qt/6.7.2/mingw_64/include/QtSql/qsqlerror.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/QDir \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qdir.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qfileinfo.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qdatetime.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qcalendar.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qtimezone.h \
+		C:/Qt/6.7.2/mingw_64/include/QtWidgets/QDialog \
 		release/moc_predefs.h \
 		C:/Qt/6.7.2/mingw_64/bin/moc.exe
 	C:\Qt\6.7.2\mingw_64\bin\moc.exe $(DEFINES) --include C:/Users/ngovi/OneDrive/Documents/ServerTest/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug/release/moc_predefs.h -IC:/Qt/6.7.2/mingw_64/mkspecs/win32-g++ -IC:/Users/ngovi/OneDrive/Documents/ServerTest -IC:/Qt/6.7.2/mingw_64/include -IC:/Qt/6.7.2/mingw_64/include/QtWidgets -IC:/Qt/6.7.2/mingw_64/include/QtGui -IC:/Qt/6.7.2/mingw_64/include/QtNetwork -IC:/Qt/6.7.2/mingw_64/include/QtSql -IC:/Qt/6.7.2/mingw_64/include/QtCore -I. -IC:/Qt/Tools/mingw1120_64/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++ -IC:/Qt/Tools/mingw1120_64/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/x86_64-w64-mingw32 -IC:/Qt/Tools/mingw1120_64/lib/gcc/x86_64-w64-mingw32/11.2.0/include/c++/backward -IC:/Qt/Tools/mingw1120_64/lib/gcc/x86_64-w64-mingw32/11.2.0/include -IC:/Qt/Tools/mingw1120_64/lib/gcc/x86_64-w64-mingw32/11.2.0/include-fixed -IC:/Qt/Tools/mingw1120_64/x86_64-w64-mingw32/include ..\..\mainwindow.h -o release\moc_mainwindow.cpp
@@ -575,6 +582,13 @@ release/main.o: ../../main.cpp ../../mainwindow.h \
 		C:/Qt/6.7.2/mingw_64/include/QtSql/qsqlrecord.h \
 		C:/Qt/6.7.2/mingw_64/include/QtSql/QSqlError \
 		C:/Qt/6.7.2/mingw_64/include/QtSql/qsqlerror.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/QDir \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qdir.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qfileinfo.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qdatetime.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qcalendar.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qtimezone.h \
+		C:/Qt/6.7.2/mingw_64/include/QtWidgets/QDialog \
 		C:/Qt/6.7.2/mingw_64/include/QtWidgets/QApplication \
 		C:/Qt/6.7.2/mingw_64/include/QtWidgets/qapplication.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o release\main.o ..\..\main.cpp
@@ -799,6 +813,13 @@ release/mainwindow.o: ../../mainwindow.cpp ../../mainwindow.h \
 		C:/Qt/6.7.2/mingw_64/include/QtSql/qsqlrecord.h \
 		C:/Qt/6.7.2/mingw_64/include/QtSql/QSqlError \
 		C:/Qt/6.7.2/mingw_64/include/QtSql/qsqlerror.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/QDir \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qdir.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qfileinfo.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qdatetime.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qcalendar.h \
+		C:/Qt/6.7.2/mingw_64/include/QtCore/qtimezone.h \
+		C:/Qt/6.7.2/mingw_64/include/QtWidgets/QDialog \
 		ui_mainwindow.h
 	$(CXX) -c $(CXXFLAGS) $(INCPATH) -o release\mainwindow.o ..\..\mainwindow.cpp
 

@@ -7,6 +7,7 @@
 #include <signin.h>
 #include <signup.h>
 #include "filetodownload.h"
+#include <QResource>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -25,6 +26,8 @@ public:
 private slots:
     void on_pushButton_clicked();
     void readDataFromSocket();
+    void downloadDataFromSocket();
+    void downloadLargeDataFromSocket();
     void readFileDownloaded();
 
     void on_pushButton_2_clicked();
@@ -35,7 +38,13 @@ private slots:
 
     void on_lineEdit_2_textChanged(const QString &textInLine);
 
-    void downloadFromServer();
+
+    void on_pushButton_5_clicked();
+
+    void on_pushButton_6_clicked();
+
+    void on_pushButton_7_clicked();
+
 private:
     Ui::MainWindow *ui;
     void sendData(QString bufferString);
@@ -55,5 +64,12 @@ public:
 public slots:
     void transitionToSignUp();
     void transitionToSignIn();
+
+private:
+    int fileDownloadSize;
+    int fileDownloadID;
+    int fileDownloadFolder;
+    QString fileDownloadPath;
+    QString fileDownloadName;
 };
 #endif // MAINWINDOW_H

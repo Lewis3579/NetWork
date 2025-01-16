@@ -50,6 +50,7 @@ public:
     QPushButton *pushButton_10;
     QPushButton *pushButton_11;
     QLineEdit *lineEdit_4;
+    QPushButton *pushButton_12;
     QMenuBar *menubar;
     QStatusBar *statusbar;
 
@@ -94,7 +95,7 @@ public:
         lineEdit_2->setGeometry(QRect(780, 50, 371, 26));
         label_2 = new QLabel(centralwidget);
         label_2->setObjectName("label_2");
-        label_2->setGeometry(QRect(700, 50, 63, 20));
+        label_2->setGeometry(QRect(700, 50, 51, 20));
         pushButton_5 = new QPushButton(centralwidget);
         pushButton_5->setObjectName("pushButton_5");
         pushButton_5->setGeometry(QRect(480, 430, 93, 29));
@@ -128,6 +129,9 @@ public:
         lineEdit_4 = new QLineEdit(centralwidget);
         lineEdit_4->setObjectName("lineEdit_4");
         lineEdit_4->setGeometry(QRect(810, 530, 311, 26));
+        pushButton_12 = new QPushButton(centralwidget);
+        pushButton_12->setObjectName("pushButton_12");
+        pushButton_12->setGeometry(QRect(590, 430, 31, 29));
         MainWindow->setCentralWidget(centralwidget);
         menubar = new QMenuBar(MainWindow);
         menubar->setObjectName("menubar");
@@ -160,6 +164,7 @@ public:
         pushButton_9->setText(QCoreApplication::translate("MainWindow", "Enter Folder", nullptr));
         pushButton_10->setText(QCoreApplication::translate("MainWindow", "Delete Folder", nullptr));
         pushButton_11->setText(QCoreApplication::translate("MainWindow", "Rename File", nullptr));
+        pushButton_12->setText(QString());
     } // retranslateUi
 
 };

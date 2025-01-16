@@ -11,6 +11,7 @@
 #include <QResource>
 #include <QIcon>
 #include <QTimer>
+#include <QPixmap>
 
 
 QT_BEGIN_NAMESPACE
@@ -56,6 +57,8 @@ private slots:
     void on_pushButton_10_clicked();
 
     void on_pushButton_11_clicked();
+
+    void on_pushButton_12_clicked();
 
 private:
     Ui::MainWindow *ui;

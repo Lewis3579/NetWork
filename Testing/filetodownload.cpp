@@ -63,6 +63,14 @@ void FileToDownload::downloadFileFromServer()
                         + "|" + QString::number(this->folderID) + "|" + QString::number(this->fileSize);
     qDebug() << dataStore;
 
+
+    QPalette pal = button->palette();
+    pal.setColor(QPalette::Button, QColor(Qt::yellow));
+    button->setAutoFillBackground(true);
+    button->setPalette(pal);
+    button->update();
+
+
     QTextStream out(&file);
     out << dataStore;
 }

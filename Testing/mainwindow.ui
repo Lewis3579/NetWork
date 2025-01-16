@@ -137,7 +137,7 @@
      <rect>
       <x>700</x>
       <y>50</y>
-      <width>63</width>
+      <width>51</width>
       <height>20</height>
      </rect>
     </property>
@@ -280,6 +280,19 @@
       <width>311</width>
       <height>26</height>
      </rect>
+    </property>
+   </widget>
+   <widget class="QPushButton" name="pushButton_12">
+    <property name="geometry">
+     <rect>
+      <x>590</x>
+      <y>430</y>
+      <width>31</width>
+      <height>29</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string/>
     </property>
    </widget>
   </widget>

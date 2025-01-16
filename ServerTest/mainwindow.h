@@ -60,12 +60,16 @@ private:
 
     int fileDownloadID;
     int fileDownloadFolder;
+    int fileDownloadOwner;
     QString fileDownloadPath;
     QString fileDownloadName;
+    QString fileDownloadState;
 
     int folderDownloadID;
     int folderDownloadParent;
+    int folderDonwloadOwner;
     QString folderDownloadPath;
     QString folderDownloadName;
+    QString folderDownloadState;
 };
 #endif // MAINWINDOW_H

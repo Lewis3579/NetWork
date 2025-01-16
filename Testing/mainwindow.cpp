@@ -24,6 +24,7 @@ MainWindow::MainWindow(QWidget *parent)
     signUpWindow = new SignUp(this, socket);
     //scrollLayout->setAlignment(Qt::AlignTop);
 
+    ui->pushButton_12->setIcon(QIcon(":/question_icon.png"));
 }
 
 MainWindow::~MainWindow()
@@ -43,14 +44,74 @@ void MainWindow::readDataFromSocket(){
     ui->textEdit->append(response);
     if(response.contains("0000")){
         ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
         //qDebug() << buffer;
         socket->write(buffer);
     }
 
+    if(response.contains("0027")){
+        ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", "Upload complete.");
+    }
+
     if(response.contains("0008")){
         ui->textEdit->append("response");
-        ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
     }
+
+    if(response.contains("0003")){
+        ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
+        request = "1001|DOWNLOAD|" + QString::number( fileDownloadID);
+        sendData(request);
+
+        disconnect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
+        connect(socket, SIGNAL(readyRead()), this, SLOT(downloadDataFromSocket()));
+    }
+
+    if(response.contains("0024")){
+        ui->textEdit->append("response");
+
+        for(int i = 0; i<fileList.count();i++){
+            scrollLayout->removeWidget(fileList[i]->getFileButton());
+            fileList[i]->getFileButton()->hide();
+        }
+
+        for(int i = 0; i<folderList.count();i++){
+            scrollLayout->removeWidget(folderList[i]->getFolderButton());
+            folderList[i]->getFolderButton()->hide();
+        }
+        scrollWidget->setLayout(scrollLayout);
+        ui->scrollArea->setWidget(scrollWidget);
+
+        for(int i = 0; i<fileList.count();i++){
+            if(fileList[i]->getFolderID()==folderDownloadID) {
+                scrollLayout->addWidget(fileList[i]->getFileButton());
+                fileList[i]->getFileButton()->show();
+            }
+        }
+
+        for(int i = 0; i<folderList.count();i++){
+            if(folderList[i]->getParentID()==folderDownloadID&&folderList[i]->getFolderID()!=0) {
+                scrollLayout->addWidget(folderList[i]->getFolderButton());
+                folderList[i]->getFolderButton()->show();
+            }
+        }
+
+        scrollWidget->setLayout(scrollLayout);
+        ui->scrollArea->setWidget(scrollWidget);
+    }
+
+    if(response.contains("0025")){
+        ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
+    }
+
+    if(response.contains("0026")){
+        ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
+    }
+
     if(response.contains("0010")){
         ui->textEdit->append("response");
         signInWindow->hide();
@@ -113,6 +174,7 @@ void MainWindow::readDataFromSocket(){
 
     if(response.contains("0015")){
         ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
     }
 
     if(response.contains("0023")){
@@ -170,6 +232,7 @@ void MainWindow::downloadDataFromSocket()
     else{
         disconnect(socket, SIGNAL(readyRead()), this, SLOT(downloadDataFromSocket()));
         connect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
+        QMessageBox::information(this, "Status", "Download complete.");
     }
 }
 
@@ -191,6 +254,7 @@ void MainWindow::downloadLargeDataFromSocket()
     if(fileDownloadSize <= 0){
         disconnect(socket, SIGNAL(readyRead()), this, SLOT(downloadLargeDataFromSocket()));
         connect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
+        QMessageBox::information(this, "Status", "Download complete.");
     }
 }
 
@@ -380,11 +444,11 @@ void MainWindow::on_pushButton_7_clicked()
     fileDownloadSize = infoList.at(4).toInt();
 
 
-    request = "1001|DOWNLOAD|" + QString::number( fileDownloadID);
+    request = "1013|CHECK_OWNER|" + QString::number( fileDownloadID);
     sendData(request);
 
-    disconnect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
-    connect(socket, SIGNAL(readyRead()), this, SLOT(downloadDataFromSocket()));
+    //disconnect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
+    //connect(socket, SIGNAL(readyRead()), this, SLOT(downloadDataFromSocket()));
 }
 
 
@@ -422,35 +486,6 @@ void MainWindow::on_pushButton_9_clicked()
     folderDownloadName = infoList.at(1);
     folderDownloadID = infoList.at(2).toInt();
     folderDownloadParent = infoList.at(3).toInt();
-
-    for(int i = 0; i<fileList.count();i++){
-        scrollLayout->removeWidget(fileList[i]->getFileButton());
-        fileList[i]->getFileButton()->hide();
-    }
-
-    for(int i = 0; i<folderList.count();i++){
-        scrollLayout->removeWidget(folderList[i]->getFolderButton());
-        folderList[i]->getFolderButton()->hide();
-    }
-    scrollWidget->setLayout(scrollLayout);
-    ui->scrollArea->setWidget(scrollWidget);
-
-    for(int i = 0; i<fileList.count();i++){
-        if(fileList[i]->getFolderID()==folderDownloadID) {
-            scrollLayout->addWidget(fileList[i]->getFileButton());
-            fileList[i]->getFileButton()->show();
-        }
-    }
-
-    for(int i = 0; i<folderList.count();i++){
-        if(folderList[i]->getParentID()==folderDownloadID&&folderList[i]->getFolderID()!=0) {
-            scrollLayout->addWidget(folderList[i]->getFolderButton());
-            folderList[i]->getFolderButton()->show();
-        }
-    }
-
-    scrollWidget->setLayout(scrollLayout);
-    ui->scrollArea->setWidget(scrollWidget);
 
     request = "1011|MOVE_TO|" + QString::number( folderDownloadID);
     sendData(request);
@@ -494,5 +529,11 @@ void MainWindow::on_pushButton_11_clicked()
 
     request = "1012|RENAME_FILE|" + this->ui->lineEdit_4->text() + "|" + QString::number( fileDownloadID);
     sendData(request);
+}
+
+
+void MainWindow::on_pushButton_12_clicked()
+{
+
 }
 

@@ -3,5 +3,6 @@
         <file>log.txt</file>
         <file>file_icon.png</file>
         <file>folder_icon.png</file>
+        <file>question_icon.png</file>
     </qresource>
 </RCC>

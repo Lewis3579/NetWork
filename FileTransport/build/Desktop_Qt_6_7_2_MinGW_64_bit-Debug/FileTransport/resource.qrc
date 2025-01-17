@@ -1,8 +1,0 @@
-<RCC>
-    <qresource prefix="/">
-        <file>Image/Test.jpg</file>
-        <file>qmlFile/Main2.qml</file>
-        <file>qmlFile/dialogFile.qml</file>
-        <file>qmlFile/flash.qml</file>
-    </qresource>
-</RCC>

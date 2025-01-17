@@ -1,6 +1,0 @@
-<RCC>
-  <qresource prefix="/qt/qml/FileTransport">
-    <file alias="qmldir">C:/Users/ngovi/OneDrive/Documents/FileTransport/build/Desktop_Qt_6_7_2_MinGW_64_bit-Debug/FileTransport/qmldir</file>
-  </qresource>
-</RCC>
-

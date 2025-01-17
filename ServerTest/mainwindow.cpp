@@ -68,12 +68,55 @@ void MainWindow::readDataFromSocket()
         fileSize = responseList.at(responseList.count()-1).toInt();
         fileState = responseList.at(responseList.count()-3);
         qDebug() << fileName;
-        response = "0000|UPLOAD_STARTING";
-        foreach (QTcpSocket* socket, clientList) {
-            socket->write(response.toStdString().c_str());
+
+        QString filePath = tempDir.absolutePath() + "/" + fileName;
+
+        QSqlQuery compareQuery;
+        compareQuery.prepare("SELECT * FROM files WHERE file_name = :fileName");
+        compareQuery.bindValue(":fileName", fileName);
+        compareQuery.exec();
+
+        int fieldFileState = compareQuery.record().indexOf("state");
+        int fieldFileOwner = compareQuery.record().indexOf("owner_id");
+        int fieldFileFolder = compareQuery.record().indexOf("folder_id");
+
+        bool nameChecked = false;
+        bool canUpload = true;
+        while(compareQuery.next()){
+            if(compareQuery.value(fieldFileFolder).toInt()==folderCurrentID){
+                nameChecked = true;
+                if(compareQuery.value(fieldFileState).toString()=="Private"){
+                    if(compareQuery.value(fieldFileOwner).toInt()!= userID){
+                        canUpload = false;
+                        response = "0002|FILE_EXIST_IN_SAME_FOLDER";
+                        foreach (QTcpSocket* socket, clientList) {
+                            socket->write(response.toStdString().c_str());
+                        }
+                    }
+                }
+            }
         }
-        disconnect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
-        connect(socket, SIGNAL(readyRead()), this, SLOT(readSpecialFromSocket()));
+
+        if(canUpload==true){
+            response = "0000|UPLOAD_STARTING";
+            foreach (QTcpSocket* socket, clientList) {
+                socket->write(response.toStdString().c_str());
+            }
+            disconnect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
+            connect(socket, SIGNAL(readyRead()), this, SLOT(readSpecialFromSocket()));
+            if(nameChecked==false){
+                QSqlQuery query;
+                query.prepare("INSERT INTO files (file_name,file_path,state,folder_id,owner_id, file_size) "
+                              "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
+                query.bindValue(":fileName", fileName);
+                query.bindValue(":filePath", filePath);
+                query.bindValue(":state", fileState);
+                query.bindValue(":folderID", folderCurrentID);
+                query.bindValue(":ownerID", userID);
+                query.bindValue(":fileSize", fileSize);
+                query.exec();
+            }
+        }
     }
 
     if(messagePostProcessing.contains("1001")){
@@ -433,6 +476,8 @@ void MainWindow::readDataFromSocket()
 
     if(messagePostProcessing.contains("1007")){
         ui->textEdit->append("request");
+
+
         QStringList folderNameList = messagePostProcessing.split(u'|');
         QString newFolderName = folderNameList.at(folderNameList.count()-1);
         QString state = folderNameList.at(folderNameList.count()-2);
@@ -550,16 +595,7 @@ void MainWindow::readSpecialFromSocket()
     }
     file.write(messageFromServer);
 
-    QSqlQuery query;
-    query.prepare("INSERT INTO files (file_name,file_path,state,folder_id,owner_id, file_size) "
-                  "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
-    query.bindValue(":fileName", fileName);
-    query.bindValue(":filePath", filePath);
-    query.bindValue(":state", fileState);
-    query.bindValue(":folderID", folderCurrentID);
-    query.bindValue(":ownerID", userID);
-    query.bindValue(":fileSize", fileSize);
-    query.exec();
+
 
     fileSize = fileSize - messageFromServer.size();
     ui->textEdit->append(QString::number(fileSize));

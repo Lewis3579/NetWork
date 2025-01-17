@@ -49,6 +49,11 @@ void MainWindow::readDataFromSocket(){
         socket->write(buffer);
     }
 
+    if(response.contains("0002")){
+        ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
+    }
+
     if(response.contains("0027")){
         ui->textEdit->append("response");
         QMessageBox::information(this, "Status", "Upload complete.");
@@ -533,6 +538,12 @@ void MainWindow::on_pushButton_11_clicked()
 
 
 void MainWindow::on_pushButton_12_clicked()
+{
+
+}
+
+
+void MainWindow::on_pushButton_13_clicked()
 {
 
 }

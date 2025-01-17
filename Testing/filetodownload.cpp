@@ -69,8 +69,6 @@ void FileToDownload::downloadFileFromServer()
     button->setAutoFillBackground(true);
     button->setPalette(pal);
     button->update();
-
-
     QTextStream out(&file);
     out << dataStore;
 }

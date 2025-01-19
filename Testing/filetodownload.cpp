@@ -6,7 +6,8 @@ void FileToDownload::setFileButton(QPushButton* buttonToSet)
 {
     this->button = buttonToSet;
     this->button->setStyleSheet("QPushButton[clicked=true]{background-color: red;}"
-                                "QPushButton[clicked=false]{background-color: white;}");
+                                "QPushButton[clicked=false]{background-color: white;}"
+                                "QPushButton:hover[access=false]{border-width: 1px;border-style: solid;border-color: white;}");
 }
 
 QPushButton* FileToDownload::getFileButton()
@@ -17,6 +18,11 @@ QPushButton* FileToDownload::getFileButton()
 QString FileToDownload::getFileName()
 {
     return this->button->text();
+}
+
+QString FileToDownload::getFileState()
+{
+    return this->fileState;
 }
 
 int FileToDownload::getFileID()
@@ -36,6 +42,16 @@ void FileToDownload::setFilePath(QString filePath){
 void FileToDownload::setFileName(QString fileName)
 {
     this->fileName = fileName;
+}
+
+void FileToDownload::setFileState(QString fileState)
+{
+    this->fileState = fileState;
+    if(fileState=="Private"){
+        this->button->setProperty("access", false);
+        this->button->style()->unpolish(this->button);
+        this->button->style()->polish(this->button);
+    }
 }
 
 void FileToDownload::setFileID(int fileID)
@@ -61,7 +77,7 @@ void FileToDownload::downloadFileFromServer()
         return;
     }
     QString dataStore = this->filePath + "|" + this->fileName + "|" + QString::number(this->fileID)
-                        + "|" + QString::number(this->folderID) + "|" + QString::number(this->fileSize);
+                        + "|" + QString::number(this->folderID) + "|" + QString::number(this->fileSize) + "|" + this->fileState;
     qDebug() << dataStore;
 
 

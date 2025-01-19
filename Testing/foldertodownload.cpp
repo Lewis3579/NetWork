@@ -6,7 +6,8 @@ void FolderToDownload::setFolderButton(QPushButton *buttonToSet)
 {
     this->button = buttonToSet;
     this->button->setStyleSheet("QPushButton[clicked=true]{background-color: yellow;}"
-                                "QPushButton[clicked=false]{background-color: white;}");
+                                "QPushButton[clicked=false]{background-color: white;}"
+                                "QPushButton:hover[access=false]{border-width: 1px;border-style: solid;border-color: white;}");
 }
 
 void FolderToDownload::setFolderPath(QString folderPath)
@@ -27,6 +28,16 @@ void FolderToDownload::setFolderID(int folderID)
 void FolderToDownload::setParentID(int parentID)
 {
     this->parentID = parentID;
+}
+
+void FolderToDownload::setFolderState(QString folderState)
+{
+    this->folderState = folderState;
+    if(folderState=="Private"){
+        this->button->setProperty("access", false);
+        this->button->style()->unpolish(this->button);
+        this->button->style()->polish(this->button);
+    }
 }
 
 QPushButton *FolderToDownload::getFolderButton()
@@ -58,7 +69,7 @@ void FolderToDownload::downloadFolderFromServer()
         return;
     }
     QString dataStore = this->folderPath + "|" + this->folderName + "|" + QString::number(this->folderID)
-                        + "|" + QString::number(this->parentID);
+                        + "|" + QString::number(this->parentID) + "|" + this->folderState;
     qDebug() << dataStore;
 
 

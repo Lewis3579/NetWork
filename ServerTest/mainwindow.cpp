@@ -467,12 +467,14 @@ void MainWindow::readDataFromSocket()
         int fieldFileID = query.record().indexOf("id");
         int fieldFolderID = query.record().indexOf("folder_id");
         int fieldFileSize = query.record().indexOf("file_size");
+        int fieldFileState = query.record().indexOf("state");
         while (query.next()) {
             QString filePathFromDB = query.value(fieldFilePath).toString();
             QString fileIDFromDB = query.value(fieldFileID).toString();
             QString folderIDFromDB = query.value(fieldFolderID).toString();
             QString fileSizeFromDB = query.value(fieldFileSize).toString();
-            response=response + fileIDFromDB + "#" + folderIDFromDB + "#" + fileSizeFromDB + "#" +filePathFromDB+"|";
+            QString fileStateFromDB = query.value(fieldFileState).toString();
+            response=response + fileIDFromDB + "#" + folderIDFromDB + "#" + fileSizeFromDB + "#" + fileStateFromDB + "#" +filePathFromDB+"|";
         }
 
         response.removeLast();
@@ -544,11 +546,13 @@ void MainWindow::readDataFromSocket()
         int fieldFolderPath = query.record().indexOf("folder_path");
         int fieldFolderID = query.record().indexOf("id");
         int fieldParentID = query.record().indexOf("parent_id");
+        int fieldStateID = query.record().indexOf("state");
         while (query.next()) {
             QString folderPathFromDB = query.value(fieldFolderPath).toString();
             QString folderIDFromDB = query.value(fieldFolderID).toString();
             QString parentIDFromDB = query.value(fieldParentID).toString();
-            response=response + folderIDFromDB + "#" + parentIDFromDB + "#" + folderPathFromDB +"|";
+            QString stateFromDB = query.value(fieldStateID).toString();
+            response=response + folderIDFromDB + "#" + parentIDFromDB + "#" + stateFromDB + "#" + folderPathFromDB +"|";
         }
 
         response.removeLast();

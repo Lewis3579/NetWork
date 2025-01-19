@@ -187,19 +187,23 @@ void MainWindow::readDataFromSocket(){
         for(int i = 2; i < filePathList.count();i++){
             FileToDownload* fileButton = new FileToDownload();
             QStringList fileInfoList = filePathList[i].split(u'#');
+            QPushButton* pushButton = new QPushButton();
+            pushButton->setIcon(QIcon(":/file_icon.png"));
+            fileButton->setFileButton(pushButton);
+
             fileButton->setFileID(fileInfoList.at(0).toInt());
             fileButton->setFolderID(fileInfoList.at(1).toInt());
             fileButton->setFileSIze(fileInfoList.at(2).toInt());
+            fileButton->setFileState(fileInfoList.at(3));
+            qDebug() << fileInfoList.at(3);
 
             fileButton->setFilePath(fileInfoList.at(fileInfoList.count()-1));
-            QPushButton* pushButton = new QPushButton();
-            pushButton->setIcon(QIcon(":/file_icon.png"));
 
             QStringList fileNameList = filePathList[i].split(u'/');
             pushButton->setText(fileNameList.at(fileNameList.count()-1));
             fileButton->setFileName(fileNameList.at(fileNameList.count()-1));
 
-            fileButton->setFileButton(pushButton);
+
             fileList.append(fileButton);
         }
 
@@ -233,18 +237,21 @@ void MainWindow::readDataFromSocket(){
 
             FolderToDownload* folderButton = new FolderToDownload();
             QStringList fileInfoList = folderPathList[i].split(u'#');
-            folderButton->setFolderID(fileInfoList.at(0).toInt());
-            folderButton->setParentID((fileInfoList.at(1).toInt()));
 
-
-            folderButton->setFolderPath(fileInfoList.at(fileInfoList.count()-1));
             QPushButton* pushButton = new QPushButton();
             pushButton->setIcon(QIcon(":/folder_icon.png"));
+            folderButton->setFolderButton(pushButton);
+            folderButton->setFolderID(fileInfoList.at(0).toInt());
+            folderButton->setParentID((fileInfoList.at(1).toInt()));
+            folderButton->setFolderState((fileInfoList.at(2)));
+
+            folderButton->setFolderPath(fileInfoList.at(fileInfoList.count()-1));
+
 
             QStringList fileNameList = folderPathList[i].split(u'/');
             pushButton->setText(fileNameList.at(fileNameList.count()-1));
             folderButton->setFolderName(fileNameList.at(fileNameList.count()-1));
-            folderButton->setFolderButton(pushButton);
+
 
             folderList.append(folderButton);
         }
@@ -591,7 +598,7 @@ void MainWindow::on_pushButton_7_clicked()
     fileDownloadID = infoList.at(2).toInt();
     fileDownloadFolder = infoList.at(3).toInt();
     fileDownloadSize = infoList.at(4).toInt();
-
+    fileDownloadState = infoList.at(5);
 
     request = "1013|CHECK_OWNER|" + QString::number( fileDownloadID);
     sendData(request);

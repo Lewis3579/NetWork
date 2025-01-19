@@ -8,7 +8,7 @@
 #include <QFileInfo>
 #include <QResource>
 #include <QObject>
-
+#include <QStyle>
 #include <QObject>
 
 class FolderToDownload: public QObject
@@ -21,6 +21,7 @@ public:
     void setFolderName(QString folderName);
     void setFolderID(int folderID);
     void setParentID(int parentID);
+    void setFolderState(QString folderState);
     QPushButton* getFolderButton();
     QString getFolderName();
     int getFolderID();
@@ -33,6 +34,7 @@ private:
     QPushButton* button;
     QString folderPath;
     QString folderName;
+    QString folderState;
     int folderID;
     int parentID;
 };

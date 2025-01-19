@@ -113,6 +113,7 @@ private:
     int fileDownloadFolder;
     QString fileDownloadPath;
     QString fileDownloadName;
+    QString fileDownloadState;
 
     int baseFolder;
     int currentFolder;

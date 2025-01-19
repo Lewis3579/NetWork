@@ -7,6 +7,7 @@
 #include <QFileInfo>
 #include <QResource>
 #include <QObject>
+#include <QStyle>
 
 class FileToDownload : public QObject
 {
@@ -18,11 +19,13 @@ public:
     void setFileButton(QPushButton* buttonToSet);
     void setFilePath(QString filePath);
     void setFileName(QString fileName);
+    void setFileState(QString fileState);
     void setFileID(int fileID);
     void setFolderID(int folderID);
     void setFileSIze(int fileSize);
     QPushButton* getFileButton();
     QString getFileName();
+    QString getFileState();
     int getFileID();
     int getFolderID();
 
@@ -33,6 +36,7 @@ private:
     QPushButton* button;
     QString filePath;
     QString fileName;
+    QString fileState;
     int fileID;
     int folderID;
     int fileSize;

@@ -7,7 +7,7 @@ void FolderToDownload::setFolderButton(QPushButton *buttonToSet)
     this->button = buttonToSet;
     this->button->setStyleSheet("QPushButton[clicked=true]{background-color: yellow;}"
                                 "QPushButton[clicked=false]{background-color: white;}"
-                                "QPushButton:hover[access=false]{border-width: 1px;border-style: solid;border-color: white;}");
+                                "QPushButton:hover[access=true]{border-width: 1px;border-style: solid;border-color: white;}");
 }
 
 void FolderToDownload::setFolderPath(QString folderPath)
@@ -33,8 +33,8 @@ void FolderToDownload::setParentID(int parentID)
 void FolderToDownload::setFolderState(QString folderState)
 {
     this->folderState = folderState;
-    if(folderState=="Private"){
-        this->button->setProperty("access", false);
+    if(folderState=="Public"){
+        this->button->setProperty("access", true);
         this->button->style()->unpolish(this->button);
         this->button->style()->polish(this->button);
     }

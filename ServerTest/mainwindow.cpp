@@ -284,26 +284,55 @@ void MainWindow::readDataFromSocket()
 
         int fieldFolderName = query.record().indexOf("folder_name");
         int fieldFolderPath = query.record().indexOf("folder_path");
+        int fieldFolderState = query.record().indexOf("state");
+        int fieldFolderOwner = query.record().indexOf("owner_id");
 
         while(query.next()){
             folderDownloadName = query.value(fieldFolderName).toString();
             folderDownloadPath = query.value(fieldFolderPath).toString();
+            folderDownloadState = query.value(fieldFolderState).toString();
+            folderDonwloadOwner = query.value(fieldFolderOwner).toInt();
         }
 
-        QDir folderDelete(folderDownloadPath);
+        if (folderDownloadState == "Private"){
+            if (folderDonwloadOwner != userID){
+                response = "0026|CAN_NOT_ACCESS";
+                foreach (QTcpSocket* socket, clientList) {
+                    socket->write(response.toStdString().c_str());
+                }
+            }
+            else{
+                QDir folderDelete(folderDownloadPath);
+                folderDelete.removeRecursively();
 
+                QSqlQuery queryDelete;
+                queryDelete.prepare("DELETE FROM folders WHERE id = :folderID");
+                queryDelete.bindValue(":folderID", folderDownloadID);
+                queryDelete.exec();
 
-        folderDelete.removeRecursively();
+                response = "0018|DELETE_FOLDER_SUCCESS";
+                foreach (QTcpSocket* socket, clientList) {
+                    socket->write(response.toStdString().c_str());
+                }
 
-        QSqlQuery queryDelete;
-        queryDelete.prepare("DELETE FROM folders WHERE id = :folderID");
-        queryDelete.bindValue(":folderID", folderDownloadID);
-        queryDelete.exec();
-
-        response = "0018|DELETE_FOLDER_SUCCESS";
-        foreach (QTcpSocket* socket, clientList) {
-            socket->write(response.toStdString().c_str());
+            }
         }
+        else{
+            QDir folderDelete(folderDownloadPath);
+            folderDelete.removeRecursively();
+
+            QSqlQuery queryDelete;
+            queryDelete.prepare("DELETE FROM folders WHERE id = :folderID");
+            queryDelete.bindValue(":folderID", folderDownloadID);
+            queryDelete.exec();
+
+            response = "0018|DELETE_FOLDER_SUCCESS";
+            foreach (QTcpSocket* socket, clientList) {
+                socket->write(response.toStdString().c_str());
+            }
+
+        }
+
 
     }
 

@@ -55,6 +55,7 @@ void MainWindow::readDataFromSocket(){
 
     if(response.contains("0027")){
         ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
     }
 
     if(response.contains("0008")){

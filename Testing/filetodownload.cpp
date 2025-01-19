@@ -7,7 +7,7 @@ void FileToDownload::setFileButton(QPushButton* buttonToSet)
     this->button = buttonToSet;
     this->button->setStyleSheet("QPushButton[clicked=true]{background-color: red;}"
                                 "QPushButton[clicked=false]{background-color: white;}"
-                                "QPushButton:hover[access=false]{border-width: 1px;border-style: solid;border-color: white;}");
+                                "QPushButton:hover[access=true]{border-width: 1px;border-style: solid;border-color: white;}");
 }
 
 QPushButton* FileToDownload::getFileButton()
@@ -47,8 +47,8 @@ void FileToDownload::setFileName(QString fileName)
 void FileToDownload::setFileState(QString fileState)
 {
     this->fileState = fileState;
-    if(fileState=="Private"){
-        this->button->setProperty("access", false);
+    if(fileState=="Public"){
+        this->button->setProperty("access", true);
         this->button->style()->unpolish(this->button);
         this->button->style()->polish(this->button);
     }

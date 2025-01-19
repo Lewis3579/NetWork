@@ -87,6 +87,9 @@ private:
     QString requestCopy_Cut;
     QString folderUpload;
     QStringList files;
+    QString folerUploadPath;
+    int fileIndex;
+
 public:
     QTcpSocket *socket;
     QString request;

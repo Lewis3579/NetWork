@@ -273,6 +273,42 @@ void MainWindow::readDataFromSocket(){
         ui->textEdit->append("response");
         QMessageBox::information(this, "Status", response);
     }
+
+    if(response.contains("0032")){
+        ui->textEdit->append("response");
+        qDebug() << fileIndex;
+        qDebug() << files.count();
+        if(fileIndex < files.count()){
+            QString filePath = folerUploadPath + "/" + files.at(fileIndex);
+            QFile file(filePath);
+            if(!file.open(QIODevice::ReadOnly)){
+                qDebug() << "Cant open selected file.";
+            }
+
+            buffer = file.readAll();
+            request = "1018|UPLOAD_FILES_IN_FOLDER|";
+
+            if(ui->checkBox_3->isChecked()){
+                request = request + "Private|";
+            }
+            else{
+                request = request + "Public|";
+            }
+
+            QStringList pathList = filePath.split(u'/');
+            QString fileName = pathList.at(pathList.count()-1);
+            request = request + fileName + "|" + QString::number( buffer.size());
+
+            fileIndex++;
+            sendData(request);
+        }
+    }
+
+    if(response.contains("0033")){
+        ui->textEdit->append("response");
+        //qDebug() << buffer;
+        socket->write(buffer);
+    }
 }
 
 void MainWindow::downloadDataFromSocket()
@@ -698,11 +734,15 @@ void MainWindow::on_pushButton_17_clicked()
 {
     QFileDialog folderDialog;
     folderDialog.setFileMode(QFileDialog::Directory);
-    QString folerPath = folderDialog.getExistingDirectory(this, tr("Open files"), "D:\\");
+    folerUploadPath = folderDialog.getExistingDirectory(this, tr("Open files"), "D:\\");
 
-    QDir chosenFolder(folerPath);
+    QDir chosenFolder(folerUploadPath);
     folderUpload = chosenFolder.dirName();
     files = chosenFolder.entryList(QDir::Files);
+    for(int i = 0; i < files.count();i++){
+        qDebug() << folerUploadPath + "/" + files.at(i);
+    }
+    fileIndex = 0;
 }
 
 

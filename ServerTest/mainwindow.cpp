@@ -856,11 +856,45 @@ void MainWindow::readDataFromSocket()
 
             query.exec();
 
-            response = "0032|NEW_UPLOAD_FOLDER";
+            tempDir.setPath(newFolderPath);
+            folderCurrentID = query.lastInsertId().toInt();
+            qDebug() << folderCurrentID;
+
+            response = "0032|FOLDER_CREATED_UPLOADING_FILE";
             foreach (QTcpSocket* socket, clientList) {
                 socket->write(response.toStdString().c_str());
             }
         }
+    }
+
+    if(messagePostProcessing.contains("1018")){
+        ui->textEdit->append("request");
+
+        QStringList responseList = messagePostProcessing.split(u'|');
+        fileName = responseList.at(responseList.count()-2);
+        fileSize = responseList.at(responseList.count()-1).toInt();
+        fileState = responseList.at(responseList.count()-3);
+        qDebug() << fileName;
+
+        QString filePath = tempDir.absolutePath() + "/" + fileName;
+        disconnect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
+        connect(socket, SIGNAL(readyRead()), this, SLOT(readFolderFilesFromSocket()));
+        QSqlQuery query;
+        query.prepare("INSERT INTO files (file_name,file_path,state,folder_id,owner_id, file_size) "
+                      "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
+        query.bindValue(":fileName", fileName);
+        query.bindValue(":filePath", filePath);
+        query.bindValue(":state", fileState);
+        query.bindValue(":folderID", folderCurrentID);
+        query.bindValue(":ownerID", userID);
+        query.bindValue(":fileSize", fileSize);
+        query.exec();
+
+        response = "0033|UPLOADING_FOLDER_FILE_STARTING";
+        foreach (QTcpSocket* socket, clientList) {
+            socket->write(response.toStdString().c_str());
+        }
+
     }
 }
 
@@ -903,7 +937,7 @@ void MainWindow::readSpecialLargeFromSocket()
     QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
     QByteArray messageFromServer = socket->readAll();
     //qDebug() << messageFromServer;
-    QString filePath = "D:\\dataRoot\\" + fileName;
+    QString filePath = tempDir.absolutePath() + "/" + fileName;
     QFile file(filePath);
     if(!file.open(QIODevice::Append)){
         qDebug() << "Cant open selected file.";
@@ -916,6 +950,62 @@ void MainWindow::readSpecialLargeFromSocket()
         disconnect(socket, SIGNAL(readyRead()), this, SLOT(readSpecialLargeFromSocket()));
         connect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
         response = "0027|UPLOAD_COMPLETE";
+        foreach (QTcpSocket* socket, clientList) {
+            socket->write(response.toStdString().c_str());
+        }
+    }
+}
+
+void MainWindow::readFolderFilesFromSocket()
+{
+    QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
+    QByteArray messageFromServer = socket->readAll();
+    //qDebug() << messageFromServer;
+    QString filePath = tempDir.absolutePath() + "/" + fileName;
+    QFile file(filePath);
+    if(!file.open(QIODevice::WriteOnly)){
+        qDebug() << "Cant open selected file.";
+    }
+    file.write(messageFromServer);
+
+
+
+    fileSize = fileSize - messageFromServer.size();
+    ui->textEdit->append(QString::number(fileSize));
+    if(fileSize>0){
+        disconnect(socket, SIGNAL(readyRead()), this, SLOT(readFolderFilesFromSocket()));
+        connect(socket, SIGNAL(readyRead()), this, SLOT(readFolderFilesLargeFromSocket()));
+
+    }
+    else{
+        disconnect(socket, SIGNAL(readyRead()), this, SLOT(readFolderFilesFromSocket()));
+        connect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
+
+        response = "0032|FOLDER_CREATED_UPLOADING_FILE";
+        foreach (QTcpSocket* socket, clientList) {
+            socket->write(response.toStdString().c_str());
+        }
+    }
+}
+
+void MainWindow::readFolderFilesLargeFromSocket()
+{
+    QTcpSocket* socket = reinterpret_cast<QTcpSocket*>(sender());
+    QByteArray messageFromServer = socket->readAll();
+    //qDebug() << messageFromServer;
+    QString filePath = tempDir.absolutePath() + "/" + fileName;
+    QFile file(filePath);
+    if(!file.open(QIODevice::Append)){
+        qDebug() << "Cant open selected file.";
+    }
+    file.write(messageFromServer);
+
+    fileSize = fileSize - messageFromServer.size();
+    ui->textEdit->append(QString::number(fileSize));
+    if(fileSize <= 0){
+        disconnect(socket, SIGNAL(readyRead()), this, SLOT(readFolderFilesLargeFromSocket()));
+        connect(socket, SIGNAL(readyRead()), this, SLOT(readDataFromSocket()));
+        response = "0032|FOLDER_CREATED_UPLOADING_FILE";
         foreach (QTcpSocket* socket, clientList) {
             socket->write(response.toStdString().c_str());
         }

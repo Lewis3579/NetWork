@@ -199,7 +199,7 @@ public:
         pushButton_16->setText(QCoreApplication::translate("MainWindow", "Cut File", nullptr));
         pushButton_17->setText(QCoreApplication::translate("MainWindow", "Choose folder", nullptr));
         checkBox_3->setText(QCoreApplication::translate("MainWindow", "Private", nullptr));
-        pushButton_18->setText(QCoreApplication::translate("MainWindow", "PushButton", nullptr));
+        pushButton_18->setText(QCoreApplication::translate("MainWindow", "Up Folder", nullptr));
     } // retranslateUi
 
 };

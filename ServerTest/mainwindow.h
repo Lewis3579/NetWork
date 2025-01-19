@@ -38,6 +38,9 @@ private slots:
     void readSpecialFromSocket();
     void readSpecialLargeFromSocket();
 
+    void readFolderFilesFromSocket();
+    void readFolderFilesLargeFromSocket();
+
     void on_pushButton_2_clicked();
 
 
@@ -51,7 +54,7 @@ private:
 
     QString response;
     QString fileName;
-    int fileSize;
+    uint64_t fileSize;
     QDir rootDir;
     int userID;
     int folderCurrentID;

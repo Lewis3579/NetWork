@@ -44,7 +44,6 @@ void MainWindow::readDataFromSocket(){
     ui->textEdit->append(response);
     if(response.contains("0000")){
         ui->textEdit->append("response");
-        QMessageBox::information(this, "Status", response);
         //qDebug() << buffer;
         socket->write(buffer);
     }
@@ -56,7 +55,6 @@ void MainWindow::readDataFromSocket(){
 
     if(response.contains("0027")){
         ui->textEdit->append("response");
-        QMessageBox::information(this, "Status", "Upload complete.");
     }
 
     if(response.contains("0008")){
@@ -66,7 +64,6 @@ void MainWindow::readDataFromSocket(){
 
     if(response.contains("0003")){
         ui->textEdit->append("response");
-        QMessageBox::information(this, "Status", response);
         request = "1001|DOWNLOAD|" + QString::number( fileDownloadID);
         sendData(request);
 
@@ -76,6 +73,9 @@ void MainWindow::readDataFromSocket(){
 
     if(response.contains("0024")){
         ui->textEdit->append("response");
+
+        currentFolder = folderDownloadID;
+        parrentFolder = folderDownloadParent;
 
         for(int i = 0; i<fileList.count();i++){
             scrollLayout->removeWidget(fileList[i]->getFileButton());
@@ -90,14 +90,51 @@ void MainWindow::readDataFromSocket(){
         ui->scrollArea->setWidget(scrollWidget);
 
         for(int i = 0; i<fileList.count();i++){
-            if(fileList[i]->getFolderID()==folderDownloadID) {
+            if(fileList[i]->getFolderID()==currentFolder) {
                 scrollLayout->addWidget(fileList[i]->getFileButton());
                 fileList[i]->getFileButton()->show();
             }
         }
 
         for(int i = 0; i<folderList.count();i++){
-            if(folderList[i]->getParentID()==folderDownloadID&&folderList[i]->getFolderID()!=0) {
+            if(folderList[i]->getParentID()==currentFolder&&folderList[i]->getFolderID()!=0) {
+                scrollLayout->addWidget(folderList[i]->getFolderButton());
+                folderList[i]->getFolderButton()->show();
+            }
+        }
+
+        scrollWidget->setLayout(scrollLayout);
+        ui->scrollArea->setWidget(scrollWidget);
+    }
+
+    if(response.contains("0028")){
+        ui->textEdit->append("response");
+        QStringList messageList = response.split(u'|');
+
+        currentFolder = messageList.at(2).toInt();
+        parrentFolder = messageList.at(3).toInt();
+
+        for(int i = 0; i<fileList.count();i++){
+            scrollLayout->removeWidget(fileList[i]->getFileButton());
+            fileList[i]->getFileButton()->hide();
+        }
+
+        for(int i = 0; i<folderList.count();i++){
+            scrollLayout->removeWidget(folderList[i]->getFolderButton());
+            folderList[i]->getFolderButton()->hide();
+        }
+        scrollWidget->setLayout(scrollLayout);
+        ui->scrollArea->setWidget(scrollWidget);
+
+        for(int i = 0; i<fileList.count();i++){
+            if(fileList[i]->getFolderID()==currentFolder) {
+                scrollLayout->addWidget(fileList[i]->getFileButton());
+                fileList[i]->getFileButton()->show();
+            }
+        }
+
+        for(int i = 0; i<folderList.count();i++){
+            if(folderList[i]->getParentID()==currentFolder&&folderList[i]->getFolderID()!=0) {
                 scrollLayout->addWidget(folderList[i]->getFolderButton());
                 folderList[i]->getFolderButton()->show();
             }
@@ -167,14 +204,21 @@ void MainWindow::readDataFromSocket(){
         }
 
         for(int i = 0; i<fileList.count();i++){
-            if(fileList[i]->getFolderID()==currentFolder) scrollLayout->addWidget(fileList[i]->getFileButton());
+            if(fileList[i]->getFolderID()==baseFolder) scrollLayout->addWidget(fileList[i]->getFileButton());
             connect(fileList[i]->getFileButton(), SIGNAL(clicked()), fileList[i], SLOT(downloadFileFromServer()));
+            connect(fileList[i]->getFileButton(), SIGNAL(clicked()), this, SLOT(changeFileButtonCollor()));
+
         }
         scrollWidget->setLayout(scrollLayout);
         ui->scrollArea->setWidget(scrollWidget);
 
         request = "1010|LIST_FOLDER";
         sendData(request);
+    }
+
+    if(response.contains("0007")){
+        ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
     }
 
     if(response.contains("0015")){
@@ -206,12 +250,28 @@ void MainWindow::readDataFromSocket(){
         }
 
         for(int i = 0; i<folderList.count();i++){
-            if(folderList[i]->getParentID()==currentFolder&&folderList[i]->getFolderID()!=0) scrollLayout->addWidget(folderList[i]->getFolderButton());
+            if(folderList[i]->getParentID()==baseFolder&&folderList[i]->getFolderID()!=0) scrollLayout->addWidget(folderList[i]->getFolderButton());
             connect(folderList[i]->getFolderButton(), SIGNAL(clicked()), folderList[i], SLOT(downloadFolderFromServer()));
+            connect(folderList[i]->getFolderButton(), SIGNAL(clicked()), this, SLOT(changeFolderButtonCollor()));
         }
 
         scrollWidget->setLayout(scrollLayout);
         ui->scrollArea->setWidget(scrollWidget);
+    }
+
+    if(response.contains("0029")){
+        ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
+    }
+
+    if(response.contains("0030")){
+        ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
+    }
+
+    if(response.contains("0031")){
+        ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
     }
 }
 
@@ -269,6 +329,53 @@ void MainWindow::readFileDownloaded()
     ui->textEdit->append(response);
 }
 
+void MainWindow::changeFolderButtonCollor()
+{
+    QPushButton* target = qobject_cast<QPushButton*>(sender());
+    if (target!= nullptr){
+
+        qDebug() << target;
+    }
+    else{
+        qDebug() << "Cant get object";
+    }
+
+    for(int i = 0; i<folderList.count();i++){
+        QPushButton* tmpButton = folderList[i]->getFolderButton();
+        tmpButton->setProperty("clicked", false);
+        tmpButton->style()->unpolish(tmpButton);
+        tmpButton->style()->polish(tmpButton);
+    }
+
+    target->setProperty("clicked", true);
+    target->style()->unpolish(target);
+    target->style()->polish(target);
+
+}
+
+void MainWindow::changeFileButtonCollor()
+{
+    QPushButton* target = qobject_cast<QPushButton*>(sender());
+    if (target!= nullptr){
+
+        qDebug() << target;
+    }
+    else{
+        qDebug() << "Cant get object";
+    }
+
+    for(int i = 0; i<fileList.count();i++){
+        QPushButton* tmpButton = fileList[i]->getFileButton();
+        tmpButton->setProperty("clicked", false);
+        tmpButton->style()->unpolish(tmpButton);
+        tmpButton->style()->polish(tmpButton);
+    }
+
+    target->setProperty("clicked", true);
+    target->style()->unpolish(target);
+    target->style()->polish(target);
+}
+
 void MainWindow::on_pushButton_2_clicked()
 {
     QString filePath = QFileDialog::getOpenFileName(this, tr("Open files"), "D:\\");
@@ -280,18 +387,18 @@ void MainWindow::on_pushButton_2_clicked()
 
 
     buffer = file.readAll();
-    request = "1000|UPLOAD|";
+    requestUpload = "1000|UPLOAD|";
 
     if(ui->checkBox->isChecked()){
-        request = request + "Private|";
+        requestUpload = requestUpload + "Private|";
     }
     else{
-        request = request + "Public|";
+        requestUpload = requestUpload + "Public|";
     }
 
     QStringList pathList = filePath.split(u'/');
     QString fileName = pathList.at(pathList.count()-1);
-    request = request + fileName + "|" + QString::number( buffer.size());
+    requestUpload = requestUpload + fileName + "|" + QString::number( buffer.size());
 }
 
 void MainWindow::sendData(QString bufferString)
@@ -375,7 +482,8 @@ void MainWindow::on_pushButton_4_clicked()
     request = "1003|LIST_FILE";
     sendData(request);
 
-    currentFolder = 0;
+    baseFolder = 0;
+    currentFolder = baseFolder;
 
 }
 
@@ -409,8 +517,8 @@ void MainWindow::on_lineEdit_2_textChanged(const QString &textInLine)
 
 void MainWindow::on_pushButton_5_clicked()
 {
-    qDebug() << request;
-    sendData(request);
+    qDebug() << requestUpload;
+    sendData(requestUpload);
 }
 
 
@@ -545,6 +653,71 @@ void MainWindow::on_pushButton_12_clicked()
 
 void MainWindow::on_pushButton_13_clicked()
 {
+    request = "1014|RETURN|" + QString::number( parrentFolder);
+    sendData(request);
+}
 
+
+void MainWindow::on_pushButton_14_clicked()
+{
+    QFile file("D:\\fileINFO.txt");
+    if(!file.open(QIODevice::ReadOnly|QIODevice::Text)){
+        qDebug() << "Cannot read file info";
+    }
+
+    QString info = file.readAll();
+    QStringList infoList = info.split(u'|');
+
+    operatingFile = infoList.at(2).toInt();
+    requestCopy_Cut = "1015|COPY_FILE|" + QString::number(operatingFile);
+}
+
+
+void MainWindow::on_pushButton_15_clicked()
+{
+    sendData(requestCopy_Cut);
+}
+
+
+void MainWindow::on_pushButton_16_clicked()
+{
+    QFile file("D:\\fileINFO.txt");
+    if(!file.open(QIODevice::ReadOnly|QIODevice::Text)){
+        qDebug() << "Cannot read file info";
+    }
+
+    QString info = file.readAll();
+    QStringList infoList = info.split(u'|');
+
+    operatingFile = infoList.at(2).toInt();
+    requestCopy_Cut = "1016|CUT_FILE|" + QString::number(operatingFile);
+}
+
+
+void MainWindow::on_pushButton_17_clicked()
+{
+    QFileDialog folderDialog;
+    folderDialog.setFileMode(QFileDialog::Directory);
+    QString folerPath = folderDialog.getExistingDirectory(this, tr("Open files"), "D:\\");
+
+    QDir chosenFolder(folerPath);
+    folderUpload = chosenFolder.dirName();
+    files = chosenFolder.entryList(QDir::Files);
+}
+
+
+
+
+void MainWindow::on_pushButton_18_clicked()
+{
+    request = "1017|UPLOAD_FOLDER|";
+    if(ui->checkBox_3->isChecked()){
+        request = request + "Private|";
+    }
+    else{
+        request = request + "Public|";
+    }
+    request = request + folderUpload;
+    sendData(request);
 }
 

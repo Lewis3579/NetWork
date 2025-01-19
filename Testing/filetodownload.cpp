@@ -5,6 +5,8 @@ FileToDownload::FileToDownload() {}
 void FileToDownload::setFileButton(QPushButton* buttonToSet)
 {
     this->button = buttonToSet;
+    this->button->setStyleSheet("QPushButton[clicked=true]{background-color: red;}"
+                                "QPushButton[clicked=false]{background-color: white;}");
 }
 
 QPushButton* FileToDownload::getFileButton()
@@ -52,7 +54,6 @@ void FileToDownload::setFileSIze(int fileSize)
 }
 void FileToDownload::downloadFileFromServer()
 {
-
     QFile file("D:\\fileINFO.txt");
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)){
@@ -64,11 +65,6 @@ void FileToDownload::downloadFileFromServer()
     qDebug() << dataStore;
 
 
-    QPalette pal = button->palette();
-    pal.setColor(QPalette::Button, QColor(Qt::yellow));
-    button->setAutoFillBackground(true);
-    button->setPalette(pal);
-    button->update();
     QTextStream out(&file);
     out << dataStore;
 }

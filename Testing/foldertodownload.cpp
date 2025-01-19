@@ -5,6 +5,8 @@ FolderToDownload::FolderToDownload() {}
 void FolderToDownload::setFolderButton(QPushButton *buttonToSet)
 {
     this->button = buttonToSet;
+    this->button->setStyleSheet("QPushButton[clicked=true]{background-color: yellow;}"
+                                "QPushButton[clicked=false]{background-color: white;}");
 }
 
 void FolderToDownload::setFolderPath(QString folderPath)
@@ -49,7 +51,6 @@ int FolderToDownload::getParentID()
 
 void FolderToDownload::downloadFolderFromServer()
 {
-
     QFile file("D:\\folderINFO.txt");
 
     if (!file.open(QIODevice::WriteOnly | QIODevice::Text)){
@@ -60,11 +61,7 @@ void FolderToDownload::downloadFolderFromServer()
                         + "|" + QString::number(this->parentID);
     qDebug() << dataStore;
 
-    QPalette pal = button->palette();
-    pal.setColor(QPalette::Button, QColor(Qt::yellow));
-    button->setAutoFillBackground(true);
-    button->setPalette(pal);
-    button->update();
+
 
     QTextStream out(&file);
     out << dataStore;

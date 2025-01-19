@@ -123,7 +123,7 @@ void MainWindow::readDataFromSocket()
         ui->textEdit->append("request");
 
         QFile fileDownLoad(fileDownloadPath);
-        if(fileDownLoad.open(QIODevice::ReadOnly)){
+        if(!fileDownLoad.open(QIODevice::ReadOnly)){
             qDebug() << "Cant open selected file.";
         }
         QByteArray buffer =fileDownLoad.readAll();
@@ -153,6 +153,8 @@ void MainWindow::readDataFromSocket()
             fileDownloadOwner = query.value(fieldFileOwner).toInt();
         }
 
+        QFile fileDownLoad(fileDownloadPath);
+
         if (fileDownloadState == "Private"){
             if (fileDownloadOwner != userID){
                 response = "0026|CAN_NOT_ACCESS";
@@ -162,7 +164,14 @@ void MainWindow::readDataFromSocket()
                 }
             }
             else{
-                response = "0003|DOWNLOAD_STARTING";
+
+                if(!fileDownLoad.open(QIODevice::ReadOnly)){
+                    qDebug() << "Cant open selected file.";
+                    response = "0007|FILE_NOT_FOUND";
+                }
+                else{
+                    response = "0003|DOWNLOAD_STARTING";
+                }
 
                 foreach (QTcpSocket* socket, clientList) {
                     socket->write(response.toStdString().c_str());
@@ -170,8 +179,13 @@ void MainWindow::readDataFromSocket()
             }
         }
         else{
-            response = "0003|DOWNLOAD_SUCCESS";
-
+            if(!fileDownLoad.open(QIODevice::ReadOnly)){
+                qDebug() << "Cant open selected file.";
+                response = "0007|FILE_NOT_FOUND";
+            }
+            else{
+                response = "0003|DOWNLOAD_STARTING";
+            }
             foreach (QTcpSocket* socket, clientList) {
                 socket->write(response.toStdString().c_str());
             }
@@ -256,8 +270,6 @@ void MainWindow::readDataFromSocket()
                 socket->write(response.toStdString().c_str());
             }
         }
-
-
     }
 
     if(messagePostProcessing.contains("1008")){
@@ -481,25 +493,47 @@ void MainWindow::readDataFromSocket()
         QStringList folderNameList = messagePostProcessing.split(u'|');
         QString newFolderName = folderNameList.at(folderNameList.count()-1);
         QString state = folderNameList.at(folderNameList.count()-2);
-        tempDir.mkdir(newFolderName);
+
 
         QString newFolderPath = tempDir.absoluteFilePath(newFolderName);
         qDebug() << newFolderPath;
 
-        QSqlQuery query;
-        query.prepare("INSERT INTO folders(folder_name,folder_path ,state, owner_id, parent_id) "
-                      "VALUES (:folderName,:folderPath, :state, :ownerID, :parentID)");
-        query.bindValue(":folderName", newFolderName);
-        query.bindValue(":state", state);
-        query.bindValue(":folderPath", newFolderPath);
-        query.bindValue(":ownerID", userID);
-        query.bindValue(":parentID", folderCurrentID);
+        QSqlQuery compareQuery;
+        compareQuery.prepare("SELECT * FROM folders WHERE folder_name = :folderName");
+        compareQuery.bindValue(":folderName", newFolderName);
+        compareQuery.exec();
 
-        query.exec();
+        int fieldFolderParent = compareQuery.record().indexOf("parent_id");
 
-        response = "0015|CREATE_FOLDER_SUCCESS";
-        foreach (QTcpSocket* socket, clientList) {
-            socket->write(response.toStdString().c_str());
+        bool nameChecked = false;
+        while(compareQuery.next()){
+            if(compareQuery.value(fieldFolderParent).toInt()==folderCurrentID){
+                nameChecked = true;
+                response = "0031|FOLDER_EXISTED_IN_CURRENT_FOLDER";
+                foreach (QTcpSocket* socket, clientList) {
+                    socket->write(response.toStdString().c_str());
+                }
+            }
+        }
+
+        if(nameChecked==false){
+            tempDir.mkdir(newFolderName);
+
+            QSqlQuery query;
+            query.prepare("INSERT INTO folders(folder_name,folder_path ,state, owner_id, parent_id) "
+                          "VALUES (:folderName,:folderPath, :state, :ownerID, :parentID)");
+            query.bindValue(":folderName", newFolderName);
+            query.bindValue(":state", state);
+            query.bindValue(":folderPath", newFolderPath);
+            query.bindValue(":ownerID", userID);
+            query.bindValue(":parentID", folderCurrentID);
+
+            query.exec();
+
+            response = "0015|CREATE_FOLDER_SUCCESS";
+            foreach (QTcpSocket* socket, clientList) {
+                socket->write(response.toStdString().c_str());
+            }
         }
     }
 
@@ -576,9 +610,257 @@ void MainWindow::readDataFromSocket()
                 socket->write(response.toStdString().c_str());
             }
         }
+    }
+
+    if(messagePostProcessing.contains("1014")){
+        ui->textEdit->append("request");
+
+
+        QStringList responseList = messagePostProcessing.split(u'|');
+        folderDownloadID = responseList.at(responseList.count()-1).toInt();
+        QSqlQuery query;
+        query.prepare("SELECT * FROM folders WHERE id = :folderID");
+        query.bindValue(":folderID", folderDownloadID);
+        query.exec();
+
+        int fieldFolderName = query.record().indexOf("folder_name");
+        int fieldFolderPath = query.record().indexOf("folder_path");
+        int fieldFolderParent = query.record().indexOf("parent_id");
+
+        while(query.next()){
+            folderDownloadName = query.value(fieldFolderName).toString();
+            folderDownloadPath = query.value(fieldFolderPath).toString();
+            folderDownloadParent = query.value(fieldFolderParent).toInt();
+        }
+        tempDir.setPath(folderDownloadPath);
+        folderCurrentID = folderDownloadID;
+
+        qDebug() << tempDir;
+        response = "0028|RETURN_SUCCESS|" + QString::number( folderCurrentID) + "|" + QString::number(folderDownloadParent);
+        foreach (QTcpSocket* socket, clientList) {
+            socket->write(response.toStdString().c_str());
+        }
+    }
+
+    if(messagePostProcessing.contains("1015")){
+        ui->textEdit->append("request");
+
+        QStringList responseList = messagePostProcessing.split(u'|');
+        fileDownloadID = responseList.at(responseList.count()-1).toInt();
+        QSqlQuery query;
+        query.prepare("SELECT * FROM files WHERE id = :fileID");
+        query.bindValue(":fileID", fileDownloadID);
+        query.exec();
+
+        int fieldFileName = query.record().indexOf("file_name");
+        int fieldFilePath = query.record().indexOf("file_path");
+        int fieldFileState = query.record().indexOf("state");
+        int fieldFileOwner = query.record().indexOf("owner_id");
+        int fieldFileSize = query.record().indexOf("file_size");
+
+        while(query.next()){
+            fileDownloadName = query.value(fieldFileName).toString();
+            fileDownloadPath = query.value(fieldFilePath).toString();
+            fileDownloadState = query.value(fieldFileState).toString();
+            fileDownloadOwner = query.value(fieldFileOwner).toInt();
+            fileDownloadSize = query.value(fieldFileSize).toInt();
+        }
+
+        QFile fileCopy(fileDownloadPath);
+        if(!fileCopy.open(QIODevice::ReadOnly)){
+            qDebug() << "Cant open selected file.";
+        }
+
+        QString newPath = tempDir.absolutePath() +"/" + fileDownloadName;
+        qDebug() << newPath;
 
 
 
+        if (fileDownloadState == "Private"){
+            if (fileDownloadOwner != userID){
+                response = "0026|CAN_NOT_ACCESS";
+                foreach (QTcpSocket* socket, clientList) {
+                    socket->write(response.toStdString().c_str());
+                }
+            }
+            else{
+                fileCopy.copy(newPath);
+                QSqlQuery queryCopy;
+                queryCopy.prepare("INSERT INTO files (file_name,file_path,state,folder_id,owner_id, file_size) "
+                                  "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
+                queryCopy.bindValue(":fileName", fileDownloadName);
+                queryCopy.bindValue(":filePath", newPath);
+                queryCopy.bindValue(":state", fileDownloadState);
+                queryCopy.bindValue(":folderID", folderCurrentID);
+                queryCopy.bindValue(":ownerID", fileDownloadOwner);
+                queryCopy.bindValue(":fileSize", fileDownloadSize);
+                queryCopy.exec();
+
+                response = "0029|COPY_FILE_SUCCESS";
+                foreach (QTcpSocket* socket, clientList) {
+                    socket->write(response.toStdString().c_str());
+                }
+            }
+        }
+        else{
+            fileCopy.copy(newPath);
+            QSqlQuery queryCopy;
+            queryCopy.prepare("INSERT INTO files (file_name,file_path,state,folder_id,owner_id, file_size) "
+                              "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
+            queryCopy.bindValue(":fileName", fileDownloadName);
+            queryCopy.bindValue(":filePath", newPath);
+            queryCopy.bindValue(":state", fileDownloadState);
+            queryCopy.bindValue(":folderID", folderCurrentID);
+            queryCopy.bindValue(":ownerID", fileDownloadOwner);
+            queryCopy.bindValue(":fileSize", fileDownloadSize);
+            queryCopy.exec();
+
+            response = "0029|COPY_FILE_SUCCESS";
+            foreach (QTcpSocket* socket, clientList) {
+                socket->write(response.toStdString().c_str());
+            }
+        }
+    }
+
+    if(messagePostProcessing.contains("1016")){
+        ui->textEdit->append("request");
+
+        QStringList responseList = messagePostProcessing.split(u'|');
+        fileDownloadID = responseList.at(responseList.count()-1).toInt();
+        QSqlQuery query;
+        query.prepare("SELECT * FROM files WHERE id = :fileID");
+        query.bindValue(":fileID", fileDownloadID);
+        query.exec();
+
+        int fieldFileName = query.record().indexOf("file_name");
+        int fieldFilePath = query.record().indexOf("file_path");
+        int fieldFileState = query.record().indexOf("state");
+        int fieldFileOwner = query.record().indexOf("owner_id");
+        int fieldFileSize = query.record().indexOf("file_size");
+
+        while(query.next()){
+            fileDownloadName = query.value(fieldFileName).toString();
+            fileDownloadPath = query.value(fieldFilePath).toString();
+            fileDownloadState = query.value(fieldFileState).toString();
+            fileDownloadOwner = query.value(fieldFileOwner).toInt();
+            fileDownloadSize = query.value(fieldFileSize).toInt();
+        }
+
+        QFile fileCut(fileDownloadPath);
+        if(!fileCut.open(QIODevice::ReadOnly)){
+            qDebug() << "Cant open selected file.";
+        }
+
+        QString newPath = tempDir.absolutePath() +"/" + fileDownloadName;
+        qDebug() << newPath;
+
+
+
+        if (fileDownloadState == "Private"){
+            if (fileDownloadOwner != userID){
+                response = "0026|CAN_NOT_ACCESS";
+                foreach (QTcpSocket* socket, clientList) {
+                    socket->write(response.toStdString().c_str());
+                }
+            }
+            else{
+                fileCut.rename(newPath);
+                QSqlQuery queryCut;
+                queryCut.prepare("INSERT INTO files (file_name,file_path,state,folder_id,owner_id, file_size) "
+                                  "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
+                queryCut.bindValue(":fileName", fileDownloadName);
+                queryCut.bindValue(":filePath", newPath);
+                queryCut.bindValue(":state", fileDownloadState);
+                queryCut.bindValue(":folderID", folderCurrentID);
+                queryCut.bindValue(":ownerID", fileDownloadOwner);
+                queryCut.bindValue(":fileSize", fileDownloadSize);
+                queryCut.exec();
+
+                QSqlQuery queryDelete;
+                queryDelete.prepare("DELETE FROM files WHERE id = :fileID");
+                queryDelete.bindValue(":fileID", fileDownloadID);
+                queryDelete.exec();
+
+                response = "0030|CUT_FILE_SUCCESS";
+                foreach (QTcpSocket* socket, clientList) {
+                    socket->write(response.toStdString().c_str());
+                }
+            }
+        }
+        else{
+            fileCut.rename(newPath);
+            QSqlQuery queryCut;
+            queryCut.prepare("INSERT INTO files (file_name,file_path,state,folder_id,owner_id, file_size) "
+                              "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
+            queryCut.bindValue(":fileName", fileDownloadName);
+            queryCut.bindValue(":filePath", newPath);
+            queryCut.bindValue(":state", fileDownloadState);
+            queryCut.bindValue(":folderID", folderCurrentID);
+            queryCut.bindValue(":ownerID", fileDownloadOwner);
+            queryCut.bindValue(":fileSize", fileDownloadSize);
+            queryCut.exec();
+
+            QSqlQuery queryDelete;
+            queryDelete.prepare("DELETE FROM files WHERE id = :fileID");
+            queryDelete.bindValue(":fileID", fileDownloadID);
+            queryDelete.exec();
+
+            response = "0030|CUT_FILE_SUCCESS";
+            foreach (QTcpSocket* socket, clientList) {
+                socket->write(response.toStdString().c_str());
+            }
+        }
+    }
+
+    if(messagePostProcessing.contains("1017")){
+        ui->textEdit->append("request");
+
+
+        QStringList folderNameList = messagePostProcessing.split(u'|');
+        QString newFolderName = folderNameList.at(folderNameList.count()-1);
+        QString state = folderNameList.at(folderNameList.count()-2);
+
+
+        QString newFolderPath = tempDir.absoluteFilePath(newFolderName);
+        qDebug() << newFolderPath;
+
+        QSqlQuery compareQuery;
+        compareQuery.prepare("SELECT * FROM folders WHERE folder_name = :folderName");
+        compareQuery.bindValue(":folderName", newFolderName);
+        compareQuery.exec();
+
+        int fieldFolderParent = compareQuery.record().indexOf("parent_id");
+
+        bool nameChecked = false;
+        while(compareQuery.next()){
+            if(compareQuery.value(fieldFolderParent).toInt()==folderCurrentID){
+                nameChecked = true;
+                response = "0031|FOLDER_EXISTED_IN_CURRENT_FOLDER";
+                foreach (QTcpSocket* socket, clientList) {
+                    socket->write(response.toStdString().c_str());
+                }
+            }
+        }
+
+        if(nameChecked==false){
+            tempDir.mkdir(newFolderName);
+
+            QSqlQuery query;
+            query.prepare("INSERT INTO folders(folder_name,folder_path ,state, owner_id, parent_id) "
+                          "VALUES (:folderName,:folderPath, :state, :ownerID, :parentID)");
+            query.bindValue(":folderName", newFolderName);
+            query.bindValue(":state", state);
+            query.bindValue(":folderPath", newFolderPath);
+            query.bindValue(":ownerID", userID);
+            query.bindValue(":parentID", folderCurrentID);
+
+            query.exec();
+
+            response = "0032|NEW_UPLOAD_FOLDER";
+            foreach (QTcpSocket* socket, clientList) {
+                socket->write(response.toStdString().c_str());
+            }
+        }
     }
 }
 

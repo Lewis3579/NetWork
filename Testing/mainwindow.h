@@ -12,6 +12,8 @@
 #include <QIcon>
 #include <QTimer>
 #include <QPixmap>
+#include <QStyle>
+#include <QDir>
 
 
 QT_BEGIN_NAMESPACE
@@ -34,6 +36,8 @@ private slots:
     void downloadDataFromSocket();
     void downloadLargeDataFromSocket();
     void readFileDownloaded();
+    void changeFolderButtonCollor();
+    void changeFileButtonCollor();
 
     void on_pushButton_2_clicked();
 
@@ -62,10 +66,27 @@ private slots:
 
     void on_pushButton_13_clicked();
 
+    void on_pushButton_14_clicked();
+
+    void on_pushButton_15_clicked();
+
+    void on_pushButton_16_clicked();
+
+    void on_pushButton_17_clicked();
+
+    void on_pushButton_18_clicked();
+
 private:
     Ui::MainWindow *ui;
     void sendData(QString bufferString);
     QString receiveCommand();
+    bool fileClicked;
+    bool folderClocked;
+    int operatingFile;
+    QString requestUpload;
+    QString requestCopy_Cut;
+    QString folderUpload;
+    QStringList files;
 public:
     QTcpSocket *socket;
     QString request;
@@ -89,7 +110,10 @@ private:
     int fileDownloadFolder;
     QString fileDownloadPath;
     QString fileDownloadName;
+
+    int baseFolder;
     int currentFolder;
+    int parrentFolder;
 
     int folderDownloadID;
     int folderDownloadParent;

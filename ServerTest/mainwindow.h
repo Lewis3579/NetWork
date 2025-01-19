@@ -61,6 +61,7 @@ private:
     int fileDownloadID;
     int fileDownloadFolder;
     int fileDownloadOwner;
+    int fileDownloadSize;
     QString fileDownloadPath;
     QString fileDownloadName;
     QString fileDownloadState;

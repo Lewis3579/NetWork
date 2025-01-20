@@ -317,6 +317,16 @@ void MainWindow::readDataFromSocket(){
         //qDebug() << buffer;
         socket->write(buffer);
     }
+
+    if(response.contains("0018")){
+        ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
+    }
+
+    if(response.contains("0034")){
+        ui->textEdit->append("response");
+        QMessageBox::information(this, "Status", response);
+    }
 }
 
 void MainWindow::downloadDataFromSocket()

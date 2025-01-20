@@ -237,8 +237,38 @@ void MainWindow::readDataFromSocket()
                 QFile fileDelete(fileDownloadPath);
                 if(!fileDelete.open(QIODevice::ReadOnly)){
                     qDebug() << "Cant open selected file.";
+                    response = "0007|FILE_NOT_FOUND";
+                    foreach (QTcpSocket* socket, clientList) {
+                        socket->write(response.toStdString().c_str());
+                    }
+                }
+                else{
+                    fileDelete.remove();
+
+                    QSqlQuery queryDelete;
+                    queryDelete.prepare("DELETE FROM files WHERE id = :fileID");
+                    queryDelete.bindValue(":fileID", fileDownloadID);
+                    queryDelete.exec();
+
+                    response = "0008|DELETE_FILE_SUCCESS";
+                    foreach (QTcpSocket* socket, clientList) {
+                        socket->write(response.toStdString().c_str());
+                    }
                 }
 
+
+            }
+        }
+        else{
+            QFile fileDelete(fileDownloadPath);
+            if(!fileDelete.open(QIODevice::ReadOnly)){
+                qDebug() << "Cant open selected file.";
+                response = "0007|FILE_NOT_FOUND";
+                foreach (QTcpSocket* socket, clientList) {
+                    socket->write(response.toStdString().c_str());
+                }
+            }
+            else{
                 fileDelete.remove();
 
                 QSqlQuery queryDelete;
@@ -250,24 +280,6 @@ void MainWindow::readDataFromSocket()
                 foreach (QTcpSocket* socket, clientList) {
                     socket->write(response.toStdString().c_str());
                 }
-            }
-        }
-        else{
-            QFile fileDelete(fileDownloadPath);
-            if(!fileDelete.open(QIODevice::ReadOnly)){
-                qDebug() << "Cant open selected file.";
-            }
-
-            fileDelete.remove();
-
-            QSqlQuery queryDelete;
-            queryDelete.prepare("DELETE FROM files WHERE id = :fileID");
-            queryDelete.bindValue(":fileID", fileDownloadID);
-            queryDelete.exec();
-
-            response = "0008|DELETE_FILE_SUCCESS";
-            foreach (QTcpSocket* socket, clientList) {
-                socket->write(response.toStdString().c_str());
             }
         }
     }
@@ -294,11 +306,35 @@ void MainWindow::readDataFromSocket()
             folderDonwloadOwner = query.value(fieldFolderOwner).toInt();
         }
 
-        if (folderDownloadState == "Private"){
-            if (folderDonwloadOwner != userID){
-                response = "0026|CAN_NOT_ACCESS";
-                foreach (QTcpSocket* socket, clientList) {
-                    socket->write(response.toStdString().c_str());
+        QDir folderCheck(folderDownloadPath);
+        if(!folderCheck.exists()){
+            response = "0034|FOLDER_NOT_FOUND";
+            foreach (QTcpSocket* socket, clientList) {
+                socket->write(response.toStdString().c_str());
+            }
+        }
+        else{
+            if (folderDownloadState == "Private"){
+                if (folderDonwloadOwner != userID){
+                    response = "0026|CAN_NOT_ACCESS";
+                    foreach (QTcpSocket* socket, clientList) {
+                        socket->write(response.toStdString().c_str());
+                    }
+                }
+                else{
+                    QDir folderDelete(folderDownloadPath);
+                    folderDelete.removeRecursively();
+
+                    QSqlQuery queryDelete;
+                    queryDelete.prepare("DELETE FROM folders WHERE id = :folderID");
+                    queryDelete.bindValue(":folderID", folderDownloadID);
+                    queryDelete.exec();
+
+                    response = "0018|DELETE_FOLDER_SUCCESS";
+                    foreach (QTcpSocket* socket, clientList) {
+                        socket->write(response.toStdString().c_str());
+                    }
+
                 }
             }
             else{
@@ -314,26 +350,8 @@ void MainWindow::readDataFromSocket()
                 foreach (QTcpSocket* socket, clientList) {
                     socket->write(response.toStdString().c_str());
                 }
-
             }
         }
-        else{
-            QDir folderDelete(folderDownloadPath);
-            folderDelete.removeRecursively();
-
-            QSqlQuery queryDelete;
-            queryDelete.prepare("DELETE FROM folders WHERE id = :folderID");
-            queryDelete.bindValue(":folderID", folderDownloadID);
-            queryDelete.exec();
-
-            response = "0018|DELETE_FOLDER_SUCCESS";
-            foreach (QTcpSocket* socket, clientList) {
-                socket->write(response.toStdString().c_str());
-            }
-
-        }
-
-
     }
 
     if(messagePostProcessing.contains("1012")){
@@ -362,15 +380,35 @@ void MainWindow::readDataFromSocket()
         QFile fileRename(fileDownloadPath);
         if(!fileRename.open(QIODevice::ReadOnly)){
             qDebug() << "Cant open selected file.";
+            response = "0007|FILE_NOT_FOUND";
+            foreach (QTcpSocket* socket, clientList) {
+                socket->write(response.toStdString().c_str());
+            }
         }
+        else{
+            QString newPath = fileDownloadPath.replace(fileDownloadName,newName);
 
-        QString newPath = fileDownloadPath.replace(fileDownloadName,newName);
+            if (fileDownloadState == "Private"){
+                if (fileDownloadOwner != userID){
+                    response = "0026|CAN_NOT_ACCESS";
+                    foreach (QTcpSocket* socket, clientList) {
+                        socket->write(response.toStdString().c_str());
+                    }
+                }
+                else{
+                    fileRename.rename(newPath);
 
-        if (fileDownloadState == "Private"){
-            if (fileDownloadOwner != userID){
-                response = "0026|CAN_NOT_ACCESS";
-                foreach (QTcpSocket* socket, clientList) {
-                    socket->write(response.toStdString().c_str());
+                    QSqlQuery queryRename;
+                    queryRename.prepare("UPDATE files SET file_name = :fileName, file_path = :filePath WHERE id = :fileID");
+                    queryRename.bindValue(":fileID", fileDownloadID);
+                    queryRename.bindValue(":fileName", newName);
+                    queryRename.bindValue(":filePath", newPath);
+                    queryRename.exec();
+
+                    response = "0025|RENAME_SUCCESS";
+                    foreach (QTcpSocket* socket, clientList) {
+                        socket->write(response.toStdString().c_str());
+                    }
                 }
             }
             else{
@@ -389,24 +427,6 @@ void MainWindow::readDataFromSocket()
                 }
             }
         }
-        else{
-            fileRename.rename(newPath);
-
-            QSqlQuery queryRename;
-            queryRename.prepare("UPDATE files SET file_name = :fileName, file_path = :filePath WHERE id = :fileID");
-            queryRename.bindValue(":fileID", fileDownloadID);
-            queryRename.bindValue(":fileName", newName);
-            queryRename.bindValue(":filePath", newPath);
-            queryRename.exec();
-
-            response = "0025|RENAME_SUCCESS";
-            foreach (QTcpSocket* socket, clientList) {
-                socket->write(response.toStdString().c_str());
-            }
-        }
-
-
-
     }
 
     if(messagePostProcessing.contains("1005")){
@@ -615,11 +635,30 @@ void MainWindow::readDataFromSocket()
             folderDonwloadOwner = query.value(fieldFolderOwner).toInt();
         }
 
-        if (folderDownloadState == "Private"){
-            if (folderDonwloadOwner != userID){
-                response = "0026|CAN_NOT_ACCESS";
-                foreach (QTcpSocket* socket, clientList) {
-                    socket->write(response.toStdString().c_str());
+        QDir folderCheck(folderDownloadPath);
+        if(!folderCheck.exists()){
+            response = "0034|FOLDER_NOT_FOUND";
+            foreach (QTcpSocket* socket, clientList) {
+                socket->write(response.toStdString().c_str());
+            }
+        }
+        else{
+            if (folderDownloadState == "Private"){
+                if (folderDonwloadOwner != userID){
+                    response = "0026|CAN_NOT_ACCESS";
+                    foreach (QTcpSocket* socket, clientList) {
+                        socket->write(response.toStdString().c_str());
+                    }
+                }
+                else{
+                    tempDir.setPath(folderDownloadPath);
+                    folderCurrentID = folderDownloadID;
+
+                    qDebug() << tempDir;
+                    response = "0024|MOVE_SUCCESS";
+                    foreach (QTcpSocket* socket, clientList) {
+                        socket->write(response.toStdString().c_str());
+                    }
                 }
             }
             else{
@@ -631,16 +670,6 @@ void MainWindow::readDataFromSocket()
                 foreach (QTcpSocket* socket, clientList) {
                     socket->write(response.toStdString().c_str());
                 }
-            }
-        }
-        else{
-            tempDir.setPath(folderDownloadPath);
-            folderCurrentID = folderDownloadID;
-
-            qDebug() << tempDir;
-            response = "0024|MOVE_SUCCESS";
-            foreach (QTcpSocket* socket, clientList) {
-                socket->write(response.toStdString().c_str());
             }
         }
     }
@@ -702,18 +731,39 @@ void MainWindow::readDataFromSocket()
         QFile fileCopy(fileDownloadPath);
         if(!fileCopy.open(QIODevice::ReadOnly)){
             qDebug() << "Cant open selected file.";
+            response = "0007|FILE_NOT_FOUND";
+            foreach (QTcpSocket* socket, clientList) {
+                socket->write(response.toStdString().c_str());
+            }
         }
+        else{
+            QString newPath = tempDir.absolutePath() +"/" + fileDownloadName;
+            qDebug() << newPath;
 
-        QString newPath = tempDir.absolutePath() +"/" + fileDownloadName;
-        qDebug() << newPath;
+            if (fileDownloadState == "Private"){
+                if (fileDownloadOwner != userID){
+                    response = "0026|CAN_NOT_ACCESS";
+                    foreach (QTcpSocket* socket, clientList) {
+                        socket->write(response.toStdString().c_str());
+                    }
+                }
+                else{
+                    fileCopy.copy(newPath);
+                    QSqlQuery queryCopy;
+                    queryCopy.prepare("INSERT INTO files (file_name,file_path,state,folder_id,owner_id, file_size) "
+                                      "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
+                    queryCopy.bindValue(":fileName", fileDownloadName);
+                    queryCopy.bindValue(":filePath", newPath);
+                    queryCopy.bindValue(":state", fileDownloadState);
+                    queryCopy.bindValue(":folderID", folderCurrentID);
+                    queryCopy.bindValue(":ownerID", fileDownloadOwner);
+                    queryCopy.bindValue(":fileSize", fileDownloadSize);
+                    queryCopy.exec();
 
-
-
-        if (fileDownloadState == "Private"){
-            if (fileDownloadOwner != userID){
-                response = "0026|CAN_NOT_ACCESS";
-                foreach (QTcpSocket* socket, clientList) {
-                    socket->write(response.toStdString().c_str());
+                    response = "0029|COPY_FILE_SUCCESS";
+                    foreach (QTcpSocket* socket, clientList) {
+                        socket->write(response.toStdString().c_str());
+                    }
                 }
             }
             else{
@@ -733,24 +783,6 @@ void MainWindow::readDataFromSocket()
                 foreach (QTcpSocket* socket, clientList) {
                     socket->write(response.toStdString().c_str());
                 }
-            }
-        }
-        else{
-            fileCopy.copy(newPath);
-            QSqlQuery queryCopy;
-            queryCopy.prepare("INSERT INTO files (file_name,file_path,state,folder_id,owner_id, file_size) "
-                              "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
-            queryCopy.bindValue(":fileName", fileDownloadName);
-            queryCopy.bindValue(":filePath", newPath);
-            queryCopy.bindValue(":state", fileDownloadState);
-            queryCopy.bindValue(":folderID", folderCurrentID);
-            queryCopy.bindValue(":ownerID", fileDownloadOwner);
-            queryCopy.bindValue(":fileSize", fileDownloadSize);
-            queryCopy.exec();
-
-            response = "0029|COPY_FILE_SUCCESS";
-            foreach (QTcpSocket* socket, clientList) {
-                socket->write(response.toStdString().c_str());
             }
         }
     }
@@ -782,25 +814,51 @@ void MainWindow::readDataFromSocket()
         QFile fileCut(fileDownloadPath);
         if(!fileCut.open(QIODevice::ReadOnly)){
             qDebug() << "Cant open selected file.";
+            response = "0007|FILE_NOT_FOUND";
+            foreach (QTcpSocket* socket, clientList) {
+                socket->write(response.toStdString().c_str());
+            }
         }
+        else{
+            QString newPath = tempDir.absolutePath() +"/" + fileDownloadName;
+            qDebug() << newPath;
 
-        QString newPath = tempDir.absolutePath() +"/" + fileDownloadName;
-        qDebug() << newPath;
+            if (fileDownloadState == "Private"){
+                if (fileDownloadOwner != userID){
+                    response = "0026|CAN_NOT_ACCESS";
+                    foreach (QTcpSocket* socket, clientList) {
+                        socket->write(response.toStdString().c_str());
+                    }
+                }
+                else{
+                    fileCut.rename(newPath);
+                    QSqlQuery queryCut;
+                    queryCut.prepare("INSERT INTO files (file_name,file_path,state,folder_id,owner_id, file_size) "
+                                     "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
+                    queryCut.bindValue(":fileName", fileDownloadName);
+                    queryCut.bindValue(":filePath", newPath);
+                    queryCut.bindValue(":state", fileDownloadState);
+                    queryCut.bindValue(":folderID", folderCurrentID);
+                    queryCut.bindValue(":ownerID", fileDownloadOwner);
+                    queryCut.bindValue(":fileSize", fileDownloadSize);
+                    queryCut.exec();
 
+                    QSqlQuery queryDelete;
+                    queryDelete.prepare("DELETE FROM files WHERE id = :fileID");
+                    queryDelete.bindValue(":fileID", fileDownloadID);
+                    queryDelete.exec();
 
-
-        if (fileDownloadState == "Private"){
-            if (fileDownloadOwner != userID){
-                response = "0026|CAN_NOT_ACCESS";
-                foreach (QTcpSocket* socket, clientList) {
-                    socket->write(response.toStdString().c_str());
+                    response = "0030|CUT_FILE_SUCCESS";
+                    foreach (QTcpSocket* socket, clientList) {
+                        socket->write(response.toStdString().c_str());
+                    }
                 }
             }
             else{
                 fileCut.rename(newPath);
                 QSqlQuery queryCut;
                 queryCut.prepare("INSERT INTO files (file_name,file_path,state,folder_id,owner_id, file_size) "
-                                  "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
+                                 "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
                 queryCut.bindValue(":fileName", fileDownloadName);
                 queryCut.bindValue(":filePath", newPath);
                 queryCut.bindValue(":state", fileDownloadState);
@@ -818,29 +876,6 @@ void MainWindow::readDataFromSocket()
                 foreach (QTcpSocket* socket, clientList) {
                     socket->write(response.toStdString().c_str());
                 }
-            }
-        }
-        else{
-            fileCut.rename(newPath);
-            QSqlQuery queryCut;
-            queryCut.prepare("INSERT INTO files (file_name,file_path,state,folder_id,owner_id, file_size) "
-                              "VALUES (:fileName,:filePath,:state,:folderID,:ownerID, :fileSize)");
-            queryCut.bindValue(":fileName", fileDownloadName);
-            queryCut.bindValue(":filePath", newPath);
-            queryCut.bindValue(":state", fileDownloadState);
-            queryCut.bindValue(":folderID", folderCurrentID);
-            queryCut.bindValue(":ownerID", fileDownloadOwner);
-            queryCut.bindValue(":fileSize", fileDownloadSize);
-            queryCut.exec();
-
-            QSqlQuery queryDelete;
-            queryDelete.prepare("DELETE FROM files WHERE id = :fileID");
-            queryDelete.bindValue(":fileID", fileDownloadID);
-            queryDelete.exec();
-
-            response = "0030|CUT_FILE_SUCCESS";
-            foreach (QTcpSocket* socket, clientList) {
-                socket->write(response.toStdString().c_str());
             }
         }
     }
